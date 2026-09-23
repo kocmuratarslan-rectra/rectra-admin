@@ -2,9 +2,14 @@ import ContentManager from "./ContentManager";
 
 export default function ContentPage() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">İçerik Yönetimi</h1>
+    <>
+      <div className="topbar">
+        <h1>
+          İçerik Yönetimi
+          <small>Sitedeki hizmet kartları, referans ve SSS içerikleri</small>
+        </h1>
+      </div>
       <ContentManager />
-    </div>
+    </>
   );
 }

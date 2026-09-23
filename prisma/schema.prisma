@@ -54,3 +54,21 @@ model ContentItem {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 }
+
+// Canlı sitedeki (rectra-site) bölümleri temsil eder. Admin panelindeki
+// "Süper Admin · Site Kontrolü" ekranı bu tabloyu düzenler; canlı site
+// /api/sections/public üzerinden bu veriyi çekip kendi içeriğine uygular.
+// NOT: Bu model her zaman ADDITIVE değişir (yeni alan eklenir, asla mevcut
+// alan silinmez/tipi değiştirilmez) — mevcut veri hiçbir fazda kaybolmaz.
+model SiteSection {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  icon      String
+  name      String
+  color     String
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
+  fields    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

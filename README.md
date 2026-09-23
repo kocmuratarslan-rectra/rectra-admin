@@ -1,6 +1,21 @@
 # Rectra Admin & CRM
 
-Rectra için gerçek, çalışan bir Next.js 15 (App Router, TypeScript) admin/CRM uygulaması. Ana pazarlama sitesi (rectra-site) için lead/talep yönetimi ve hizmet/referans/SSS/blog içerik yönetimi sağlar.
+Rectra için gerçek, çalışan bir Next.js 15 (App Router, TypeScript) admin/CRM uygulaması. Tasarımı `admin.html` mockup'ı ile birebir aynıdır; arayüzdeki modüllerden bir kısmı tam fonksiyonel (gerçek veri, gerçek API), bir kısmı ise henüz "Yakında" etiketiyle devre dışıdır — hiçbir modül sahte/mock veri göstermez.
+
+## Modül durumu (Faz 1)
+
+**Gerçek ve canlı çalışıyor:**
+- **Panel** — gerçek KPI'lar (toplam/yeni/kazanılan talep, dönüşüm oranı) ve son talepler tablosu, veritabanından canlı okunur.
+- **Talepler (CRM)** — site teklif formundan gelen tüm talepler, durum güncelleme, arama/filtre, silme.
+- **İçerik** — hizmet kartları (ve referans/SSS/blog altyapısı) yönetimi.
+- **Süper Admin · Site Kontrolü** — canlı sitenin (rectra-site.vercel.app) metin alanlarını ve bölüm görünürlüğünü buradan değiştirirsiniz; değişiklik birkaç saniye içinde sitede görünür (aşağıda "Site Kontrolü nasıl çalışır" bölümüne bakın).
+
+**Tasarımda mevcut, "Yakında" — gerçek entegrasyon yok, sahte veri de yok:**
+Tahsilat, Blog & SEO İçerik Üretimi (AI), Mailing Stüdyosu, Sosyal Medya & Ads, Murat AI Asistan, bazı Ayarlar entegrasyonları (WhatsApp, Google/LinkedIn/TikTok/X Ads, Spotify, muhasebe). Bu modüller kullanıcıya net şekilde "Yakında" olarak işaretlenir; hiçbir buton sahte bir başarı mesajı göstermez.
+
+**Faz planı:** Her yeni modül gerçek hale getirilmeden önce kapsam ve gereken entegrasyonlar (API anahtarları vb.) kullanıcıya sunulur ve onay alınır. Onaylanan bir sonraki faz: **Blog & SEO içerik üretimi (AI)** — bu faz başladığında bir AI API anahtarı (ör. OpenAI) istenecektir.
+
+**Veri kaybı politikası:** `prisma/schema.prisma` her zaman additive değişir (yeni alan/tablo eklenir, mevcut alan asla silinmez/tipi değiştirilmez) ve seed script'i `upsert` + boş `update: {}` kalıbını kullanır — bu sayede admin panelinde girilmiş hiçbir veri (Lead, ContentItem, SiteSection) sonraki faz güncellemelerinde ASLA ezilmez veya kaybolmaz.
 
 ## Teknolojiler
 
@@ -62,6 +77,18 @@ Giriş başarılı olduktan sonra `/admin` altındaki tüm sayfalar (Panel, Tale
 - `GET /api/leads`, `PATCH /api/leads/:id`, `DELETE /api/leads/:id` — admin oturumu gerektirir.
 - `GET /api/content/:type` — `type` = SERVICE | TESTIMONIAL | FAQ | BLOG. Oturum yoksa sadece `published: true` kayıtlar döner (ana site içeriği bu uçtan çekebilir).
 - `POST /api/content/:type`, `PUT /api/content/:type/:id`, `DELETE /api/content/:type/:id` — admin oturumu gerektirir.
+- `GET /api/sections/public` — **public**, CORS açık, önbelleklenir (60sn). Sadece `visible: true` bölümlerin `{key, fields, order}` bilgisini döner. `rectra-site/index.html` sayfa yüklenirken bu uca istek atar.
+- `GET /api/sections`, `POST /api/sections`, `PUT /api/sections/:id`, `DELETE /api/sections/:id`, `POST /api/sections/reorder` — admin oturumu gerektirir; Süper Admin · Site Kontrolü ekranı bu uçları kullanır.
+
+## Site Kontrolü nasıl çalışır
+
+`rectra-site/index.html` içindeki her düzenlenebilir metin elemanı `data-cms="bölüm.alan"` (ör. `data-cms="hero.headline"`), her bölüm sarmalayıcısı da `data-cms-section="bölüm"` (ör. `<header class="hero" data-cms-section="hero">`) etiketiyle işaretlidir. Sayfa yüklendiğinde sondaki `<script>` bloğu `GET {ADMIN_API_BASE}/api/sections/public`'i çağırır:
+
+- Dönen her bölümün `fields` nesnesindeki her `alan: değer` çifti için, sayfadaki `[data-cms="bölüm.alan"]` elemanlarının `innerHTML`'i güncellenir.
+- Bir bölüm **gizliyse** (admin panelinde kapatılmışsa) o bölüm API yanıtında hiç dönmez; script bunu görüp `[data-cms-section="bölüm"]` elemanını `display:none` yapar.
+- API'ye ulaşılamazsa (ağ hatası, admin geçici çevrimdışı vb.) script sessizce hiçbir şey değiştirmez — sayfa varsayılan (seed'deki) haliyle kalır, asla bozuk görünmez.
+
+**Kapsam notu (Faz 1):** Sadece tekil metin alanları (başlık, alt başlık, buton yazısı vb.) düzenlenebilir. Tekrarlanan liste içerikleri (fakülte kartları, SSS maddeleri, video listesi, referans listesi, takvim etkinlikleri, logo duvarı) şu an için tasarımda sabit kalır — bunları admin'den yönetilebilir hale getirmek, mevcut animasyon/tasarımı bozma riski taşıdığı için ayrı bir faz olarak planlanmalı ve önceden onay alınmalıdır. Aynı şekilde bölümlerin canlı sitedeki fiziksel sırası (DOM sırası) da sabittir; admin panelindeki sıralama oku sadece "Site Ağacı" görünümünü ve `order` alanını değiştirir, gerçek sayfa düzenini değiştirmez (diyagonal geçiş animasyonlarının bozulma riski nedeniyle).
 
 ## Vercel'e deploy
 

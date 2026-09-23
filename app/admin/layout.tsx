@@ -1,28 +1,61 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import SignOutButton from "./SignOutButton";
+import NavLink from "./NavLink";
+
+// Faz 1'de gerçek: Panel, Talepler (CRM), İçerik, Süper Admin · Site Kontrolü.
+// Diğerleri admin.html tasarımında kalır, "Yakında" etiketiyle devre dışıdır —
+// gerçek veri/entegrasyon olmadan asla sahte veri göstermezler.
+const SOON_ITEMS = [
+  { ic: "💳", n: "Tahsilat" },
+  { ic: "📝", n: "Blog & SEO (AI)" },
+  { ic: "📧", n: "Mailing Stüdyosu" },
+  { ic: "📣", n: "Sosyal Medya & Ads" },
+  { ic: "🤖", n: "Murat AI Asistan" },
+  { ic: "⚙️", n: "Ayarlar" },
+];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
+  if (!session) redirect("/admin/login");
+
+  const newLeadsCount = await prisma.lead.count({ where: { status: "NEW" } });
 
   return (
-    <div className="min-h-screen">
-      {session && (
-        <nav className="bg-rectra-dark text-white px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="font-bold">Rectra Admin</span>
-            <Link href="/admin" className="text-sm text-gray-300 hover:text-white">Panel</Link>
-            <Link href="/admin/leads" className="text-sm text-gray-300 hover:text-white">Talepler (CRM)</Link>
-            <Link href="/admin/content" className="text-sm text-gray-300 hover:text-white">İçerik</Link>
+    <div className="app">
+      <aside className="side">
+        <div className="logo">
+          RECTRA<em>.</em>
+          <small>ADMIN &amp; CRM</small>
+        </div>
+
+        <NavLink href="/admin" icon="🏠" label="Panel" exact />
+        <NavLink href="/admin/leads" icon="📨" label="Talepler (CRM)" badge={newLeadsCount > 0 ? String(newLeadsCount) : undefined} />
+        <NavLink href="/admin/content" icon="🗂" label="İçerik (Hizmetler)" />
+        <NavLink href="/admin/site" icon="🧭" label="Süper Admin · Site" />
+
+        <div style={{ height: 10 }} />
+
+        {SOON_ITEMS.map((it) => (
+          <div className="snav disabled" key={it.n}>
+            <span className="ic">{it.ic}</span>
+            {it.n}
+            <span className="bdg soon">Yakında</span>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-gray-400">{session.user?.email}</span>
+        ))}
+
+        <div className="side-foot">
+          <b>{session.user?.email}</b>
+          Rectra Business School
+          <div style={{ marginTop: 10 }}>
             <SignOutButton />
           </div>
-        </nav>
-      )}
-      <div className="p-6">{children}</div>
+        </div>
+      </aside>
+      <main className="main">{children}</main>
     </div>
   );
 }
