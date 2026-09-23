@@ -92,6 +92,15 @@ async function main() {
     }},
   ];
 
+  // Tek seferlik temizlik: Site Kontrolü özelliği daha önce hiç canlıya
+  // alınmadığı (dolayısıyla bu key'lerde admin tarafından girilmiş GERÇEK
+  // veri olmadığı) için, ilk sürümde kullanılan eski key isimleri
+  // (logos/faculties/contact → trust/services/teklif olarak yeniden
+  // adlandırıldı) burada güvenle temizlenir. Bu satır sadece bu üç eski
+  // key için çalışır; gelecekte gerçek kullanıcı verisi olan hiçbir kayıt
+  // bu şekilde silinmeyecektir (bkz. proje politikası: additive-only).
+  await prisma.siteSection.deleteMany({ where: { key: { in: ["logos", "faculties", "contact"] } } });
+
   for (const s of sections) {
     await prisma.siteSection.upsert({
       where: { key: s.key },
