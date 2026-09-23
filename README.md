@@ -93,3 +93,5 @@ Tamamen yeni bir bölüm (örn. "Vakalar/Case Study") eklemek istersen: `prisma/
 
 ### 4. Hiç uğraşmak istemiyorsan
 Yukarıdakilerin hiçbiriyle uğraşmadan, hangi değişikliği istediğini yazman yeterli — kodu ve deploy'u ben (Claude) yaparım.
+
+<!-- deploy trigger: 2026-09-23T21:16:51Z -->
