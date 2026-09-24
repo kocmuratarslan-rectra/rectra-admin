@@ -4,23 +4,18 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  // NOT: Bu değer bilerek ortam değişkeninden (ADMIN_EMAIL/ADMIN_PASSWORD) değil,
-  // doğrudan koddan okunuyor. Önceki sürümde her deploy'da Vercel'deki
-  // ADMIN_PASSWORD değeri ne ise şifreyi sessizce ona sıfırlıyordu; bu da
-  // "e-posta veya şifre hatalı" sorununa yol açtı. Şimdi bilinen, sabit bir
-  // şifreyle bir KEZ daha sıfırlanıyor. Bu deploy'dan sonra seed script'i
-  // artık mevcut admin şifresine dokunmuyor (aşağıdaki `update: {}` — bkz.
-  // bir sonraki commit), yani admin panelinden şifreni değiştirsen bile
-  // bir sonraki deploy onu geri almayacak.
+  // NOT: Admin kullanıcı SADECE hiç yoksa oluşturulur. Bir kez oluşturulduktan
+  // sonra seed script'i şifreye ASLA dokunmaz — admin panelinden (Ayarlar)
+  // şifreni değiştirsen, bir sonraki deploy onu geri almaz. (Önceki sürümde
+  // `upsert` her deploy'da passwordHash'i sabit değere sıfırlıyordu; bu artık
+  // tamamen kaldırıldı.)
   const email = "zihinacan@gmail.com";
   const password = "Rectra2026#Yonetim!";
-  const passwordHash = await bcrypt.hash(password, 10);
-
-  await prisma.adminUser.upsert({
-    where: { email },
-    update: { passwordHash },
-    create: { email, passwordHash },
-  });
+  const existingAdmin = await prisma.adminUser.findUnique({ where: { email } });
+  if (!existingAdmin) {
+    const passwordHash = await bcrypt.hash(password, 10);
+    await prisma.adminUser.create({ data: { email, passwordHash } });
+  }
 
   const services = [
     { title: "Liderlik & Yönetim", body: "Stratejik Liderlik, Delegasyon, Karar Verme", order: 1 },
@@ -30,9 +25,17 @@ async function main() {
     { title: "Kişisel Gelişim & Yapay Zeka", body: "Zaman Yönetimi, Duygusal Zeka, YZ okuryazarlığı", order: 5 },
   ];
 
-  for (const s of services) {
-    const existing = await prisma.contentItem.findFirst({ where: { type: "SERVICE", title: s.title } });
-    if (!existing) {
+  // NOT: Aşağıdaki dört blok (Hizmetler/SSS/Referanslar/Takvim/Katalog) SADECE
+  // ilgili tablo TAMAMEN BOŞSA (hiç seed edilmemiş) veri ekler. Bir kez
+  // seed edildikten sonra admin panelinde yapılan hiçbir ekleme/düzenleme/
+  // silme, sonraki bir deploy tarafından ASLA geri alınmaz veya
+  // çoğaltılmaz. (Önceki sürümde tek tek `title`/`title+date` eşleşmesine
+  // bakılıyordu; bu, admin bir kaydın TARİHİNİ değiştirdiğinde eşleşme
+  // bulunamadığı için orijinal kaydın yinelenerek geri gelmesine — takvimde
+  // "silinemiyor/revize edilemiyor" sorununa — yol açıyordu.)
+  const serviceCount = await prisma.contentItem.count({ where: { type: "SERVICE" } });
+  if (serviceCount === 0) {
+    for (const s of services) {
       await prisma.contentItem.create({ data: { type: "SERVICE", title: s.title, body: s.body, order: s.order } });
     }
   }
@@ -48,9 +51,9 @@ async function main() {
     { title: "Eğitim sonuçlarını nasıl ölçüyorsunuz?", body: "Kirkpatrick modeliyle dört seviyede: memnuniyet, öğrenme (ön/son test), davranış değişimi (30-60-90 gün takibi) ve iş sonuçlarına etki. Yönetime raporlanabilir çıktılar sunarız.", order: 5 },
     { title: "Azerbaycan'da hizmet veriyor musunuz?", body: "Evet. Bakü başta olmak üzere Azerbaycan genelinde yüz yüze ve online programlar düzenliyoruz. Azerice içerik desteği sağlanabilir.", order: 6 },
   ];
-  for (const f of faqs) {
-    const existing = await prisma.contentItem.findFirst({ where: { type: "FAQ", title: f.title } });
-    if (!existing) {
+  const faqCount = await prisma.contentItem.count({ where: { type: "FAQ" } });
+  if (faqCount === 0) {
+    for (const f of faqs) {
       await prisma.contentItem.create({ data: { type: "FAQ", title: f.title, body: f.body, order: f.order } });
     }
   }
@@ -63,9 +66,9 @@ async function main() {
     { title: "Murat T.", subtitle: "Genel Müdür, Üretim — Bursa", body: "Yapay zekâ atölyesinden bir hafta sonra ekipler kendi otomasyonlarını kurmaya başladı. Yatırımın geri dönüşünü ilk ayda gördük.", order: 2 },
     { title: "Ayşən M.", subtitle: "HR Business Partner — Bakü, Azerbaycan", body: "Eğitim öncesi dijital hazırlık ve sonrasındaki simülasyon takibi, klasik eğitim firmalarında görmediğimiz bir deneyimdi.", order: 3 },
   ];
-  for (const t of testimonials) {
-    const existing = await prisma.contentItem.findFirst({ where: { type: "TESTIMONIAL", title: t.title } });
-    if (!existing) {
+  const testimonialCount = await prisma.contentItem.count({ where: { type: "TESTIMONIAL" } });
+  if (testimonialCount === 0) {
+    for (const t of testimonials) {
       await prisma.contentItem.create({ data: { type: "TESTIMONIAL", title: t.title, subtitle: t.subtitle, body: t.body, order: t.order } });
     }
   }
@@ -84,9 +87,9 @@ async function main() {
     { title: "İK'da Yapay Zekâ: Uygulama Atölyesi", category: "AI", date: "2026-09-09", duration: "1 Gün", location: "İstanbul", hot: false, seatText: "Kontenjan açık", order: 5 },
     { title: "Stratejik Düşünme ve Karar Alma", category: "LIDER", date: "2026-09-24", duration: "1 Gün", location: "Ankara", hot: false, seatText: "Kontenjan açık", order: 6 },
   ];
-  for (const ev of calendarEvents) {
-    const existing = await prisma.calendarEvent.findFirst({ where: { title: ev.title, date: new Date(ev.date + "T00:00:00.000Z") } });
-    if (!existing) {
+  const calendarCount = await prisma.calendarEvent.count();
+  if (calendarCount === 0) {
+    for (const ev of calendarEvents) {
       await prisma.calendarEvent.create({
         data: {
           title: ev.title, category: ev.category as any, date: new Date(ev.date + "T00:00:00.000Z"),
@@ -127,9 +130,9 @@ async function main() {
     { title: "Takım Koçluğu Programı", category: "KOC", duration: "4-8 Seans", format: "Ekip", level: "Ekipler", order: 25 },
     { title: "Profesyonel Koçluk Programı (ICF Yolu)", category: "KOC", duration: "12 Hafta", format: "Hibrit", level: "Koç Adayı", order: 26 },
   ];
-  for (const c of catalogItems) {
-    const existing = await prisma.catalogItem.findFirst({ where: { title: c.title, category: c.category as any } });
-    if (!existing) {
+  const catalogCount = await prisma.catalogItem.count();
+  if (catalogCount === 0) {
+    for (const c of catalogItems) {
       await prisma.catalogItem.create({
         data: { title: c.title, category: c.category as any, duration: c.duration, format: c.format, level: c.level, order: c.order },
       });
