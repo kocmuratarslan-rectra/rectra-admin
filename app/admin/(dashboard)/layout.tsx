@@ -15,7 +15,6 @@ const SOON_ITEMS = [
   { ic: "📧", n: "Mailing Stüdyosu" },
   { ic: "📣", n: "Sosyal Medya & Ads" },
   { ic: "🤖", n: "Murat AI Asistan" },
-  { ic: "⚙️", n: "Ayarlar" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -36,6 +35,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <NavLink href="/admin/leads" icon="📨" label="Talepler (CRM)" badge={newLeadsCount > 0 ? String(newLeadsCount) : undefined} />
         <NavLink href="/admin/content" icon="🗂" label="İçerik (Hizmetler)" />
         <NavLink href="/admin/site" icon="🧭" label="Süper Admin · Site" />
+        <NavLink href="/admin/settings" icon="⚙️" label="Ayarlar" />
 
         <div style={{ height: 10 }} />
 

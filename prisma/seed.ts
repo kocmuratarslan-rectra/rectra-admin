@@ -4,8 +4,16 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = process.env.ADMIN_EMAIL || "zihinacan@gmail.com";
-  const password = process.env.ADMIN_PASSWORD || "ChangeMe123!";
+  // NOT: Bu değer bilerek ortam değişkeninden (ADMIN_EMAIL/ADMIN_PASSWORD) değil,
+  // doğrudan koddan okunuyor. Önceki sürümde her deploy'da Vercel'deki
+  // ADMIN_PASSWORD değeri ne ise şifreyi sessizce ona sıfırlıyordu; bu da
+  // "e-posta veya şifre hatalı" sorununa yol açtı. Şimdi bilinen, sabit bir
+  // şifreyle bir KEZ daha sıfırlanıyor. Bu deploy'dan sonra seed script'i
+  // artık mevcut admin şifresine dokunmuyor (aşağıdaki `update: {}` — bkz.
+  // bir sonraki commit), yani admin panelinden şifreni değiştirsen bile
+  // bir sonraki deploy onu geri almayacak.
+  const email = "zihinacan@gmail.com";
+  const password = "Rectra2026#Yonetim!";
   const passwordHash = await bcrypt.hash(password, 10);
 
   await prisma.adminUser.upsert({

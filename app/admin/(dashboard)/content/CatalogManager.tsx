@@ -31,6 +31,7 @@ export default function CatalogManager() {
   const [editForm, setEditForm] = useState(emptyForm);
   const [filter, setFilter] = useState("all");
   const [toast, setToast] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -88,7 +89,7 @@ export default function CatalogManager() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Bu eğitimi kataloğdan silmek istediğinize emin misiniz?")) return;
+    setConfirmDeleteId(null);
     await fetch(`/api/catalog/${id}`, { method: "DELETE" });
     showToast("Eğitim silindi");
     load();
@@ -159,11 +160,21 @@ export default function CatalogManager() {
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
-                    <button onClick={() => togglePublished(item)} className={`pill ${item.published ? "p-live" : "p-off"}`} style={{ cursor: "pointer" }}>
-                      {item.published ? "Yayında" : "Taslak"}
-                    </button>
-                    <button className="tbtn" title="Düzenle" onClick={() => startEdit(item)}>✎</button>
-                    <button className="tbtn danger" title="Sil" onClick={() => remove(item.id)}>✕</button>
+                    {confirmDeleteId === item.id ? (
+                      <>
+                        <span style={{ fontSize: 12, color: "var(--muted)" }}>Silinsin mi?</span>
+                        <button className="btn btn-line btn-sm" style={{ color: "#dc2626", borderColor: "#dc2626" }} onClick={() => remove(item.id)}>Evet, sil</button>
+                        <button className="btn btn-line btn-sm" onClick={() => setConfirmDeleteId(null)}>Vazgeç</button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => togglePublished(item)} className={`pill ${item.published ? "p-live" : "p-off"}`} style={{ cursor: "pointer" }}>
+                          {item.published ? "Yayında" : "Taslak"}
+                        </button>
+                        <button className="tbtn" title="Düzenle" onClick={() => startEdit(item)}>✎</button>
+                        <button className="tbtn danger" title="Sil" onClick={() => setConfirmDeleteId(item.id)}>✕</button>
+                      </>
+                    )}
                   </div>
                 </div>
               )}

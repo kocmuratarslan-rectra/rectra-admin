@@ -32,6 +32,7 @@ export default function ContentManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(emptyForm);
   const [toast, setToast] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -115,7 +116,7 @@ export default function ContentManager() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Bu kaydı silmek istediğinize emin misiniz?")) return;
+    setConfirmDeleteId(null);
     await fetch(`/api/content/${tab}/${id}`, { method: "DELETE" });
     showToast("Kayıt silindi");
     load(tab);
@@ -155,6 +156,8 @@ export default function ContentManager() {
           togglePublished={togglePublished}
           move={move}
           remove={remove}
+          confirmDeleteId={confirmDeleteId}
+          setConfirmDeleteId={setConfirmDeleteId}
         />
       )}
 
@@ -164,7 +167,7 @@ export default function ContentManager() {
 }
 
 function ContentTabBody({
-  items, loading, form, setForm, addItem, editingId, editForm, setEditForm, startEdit, saveEdit, setEditingId, togglePublished, move, remove,
+  items, loading, form, setForm, addItem, editingId, editForm, setEditForm, startEdit, saveEdit, setEditingId, togglePublished, move, remove, confirmDeleteId, setConfirmDeleteId,
 }: any) {
   return (
     <>
@@ -212,17 +215,27 @@ function ContentTabBody({
                     {item.body && <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{item.body}</div>}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
-                    <button className="tbtn" title="Yukarı" onClick={() => move(item, -1)} disabled={idx === 0}>↑</button>
-                    <button className="tbtn" title="Aşağı" onClick={() => move(item, 1)} disabled={idx === items.length - 1}>↓</button>
-                    <button
-                      onClick={() => togglePublished(item)}
-                      className={`pill ${item.published ? "p-live" : "p-off"}`}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {item.published ? "Yayında" : "Taslak"}
-                    </button>
-                    <button className="tbtn" title="Düzenle" onClick={() => startEdit(item)}>✎</button>
-                    <button className="tbtn danger" title="Sil" onClick={() => remove(item.id)}>✕</button>
+                    {confirmDeleteId === item.id ? (
+                      <>
+                        <span style={{ fontSize: 12, color: "var(--muted)" }}>Silinsin mi?</span>
+                        <button className="btn btn-line btn-sm" style={{ color: "#dc2626", borderColor: "#dc2626" }} onClick={() => remove(item.id)}>Evet, sil</button>
+                        <button className="btn btn-line btn-sm" onClick={() => setConfirmDeleteId(null)}>Vazgeç</button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="tbtn" title="Yukarı" onClick={() => move(item, -1)} disabled={idx === 0}>↑</button>
+                        <button className="tbtn" title="Aşağı" onClick={() => move(item, 1)} disabled={idx === items.length - 1}>↓</button>
+                        <button
+                          onClick={() => togglePublished(item)}
+                          className={`pill ${item.published ? "p-live" : "p-off"}`}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {item.published ? "Yayında" : "Taslak"}
+                        </button>
+                        <button className="tbtn" title="Düzenle" onClick={() => startEdit(item)}>✎</button>
+                        <button className="tbtn danger" title="Sil" onClick={() => setConfirmDeleteId(item.id)}>✕</button>
+                      </>
+                    )}
                   </div>
                 </div>
               )}

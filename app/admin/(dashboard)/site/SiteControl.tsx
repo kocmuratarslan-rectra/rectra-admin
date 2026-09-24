@@ -42,6 +42,7 @@ export default function SiteControl({
   const [customEditingId, setCustomEditingId] = useState<string | null>(null);
   const [customEditForm, setCustomEditForm] = useState(emptyCustomForm);
   const [addingCustom, setAddingCustom] = useState(false);
+  const [confirmDeleteCustomId, setConfirmDeleteCustomId] = useState<string | null>(null);
 
   const editing = useMemo(() => sections.find((s) => s.id === editingId) || null, [sections, editingId]);
 
@@ -169,8 +170,8 @@ export default function SiteControl({
     );
   }
 
-  async function removeCustomSection(id: string, title: string) {
-    if (!confirm(`"${title}" bölümünü kalıcı olarak silmek istediğinize emin misiniz?`)) return;
+  async function removeCustomSection(id: string) {
+    setConfirmDeleteCustomId(null);
     const res = await fetch(`/api/custom-sections/${id}`, { method: "DELETE" });
     if (res.ok) {
       setCustomSections((prev) => prev.filter((s) => s.id !== id));
@@ -278,14 +279,24 @@ export default function SiteControl({
                   {s.title}
                   <small>özel bölüm</small>
                 </span>
-                <button className="tbtn" title="Yukarı" onClick={() => moveCustom(i, -1)} disabled={i === 0}>↑</button>
-                <button className="tbtn" title="Aşağı" onClick={() => moveCustom(i, 1)} disabled={i === customSections.length - 1}>↓</button>
-                <label className="tgl" title={s.visible ? "Gizle" : "Yayına al"}>
-                  <input type="checkbox" checked={s.visible} onChange={() => toggleCustomVisible(s)} />
-                  <i></i>
-                </label>
-                <button className="tbtn" title="Düzenle" onClick={() => startCustomEdit(s)}>✎</button>
-                <button className="tbtn danger" title="Sil" onClick={() => removeCustomSection(s.id, s.title)}>✕</button>
+                {confirmDeleteCustomId === s.id ? (
+                  <>
+                    <span style={{ fontSize: 12, color: "var(--muted)" }}>Silinsin mi?</span>
+                    <button className="btn btn-line btn-sm" style={{ color: "#dc2626", borderColor: "#dc2626" }} onClick={() => removeCustomSection(s.id)}>Evet, sil</button>
+                    <button className="btn btn-line btn-sm" onClick={() => setConfirmDeleteCustomId(null)}>Vazgeç</button>
+                  </>
+                ) : (
+                  <>
+                    <button className="tbtn" title="Yukarı" onClick={() => moveCustom(i, -1)} disabled={i === 0}>↑</button>
+                    <button className="tbtn" title="Aşağı" onClick={() => moveCustom(i, 1)} disabled={i === customSections.length - 1}>↓</button>
+                    <label className="tgl" title={s.visible ? "Gizle" : "Yayına al"}>
+                      <input type="checkbox" checked={s.visible} onChange={() => toggleCustomVisible(s)} />
+                      <i></i>
+                    </label>
+                    <button className="tbtn" title="Düzenle" onClick={() => startCustomEdit(s)}>✎</button>
+                    <button className="tbtn danger" title="Sil" onClick={() => setConfirmDeleteCustomId(s.id)}>✕</button>
+                  </>
+                )}
               </div>
             )}
           </div>

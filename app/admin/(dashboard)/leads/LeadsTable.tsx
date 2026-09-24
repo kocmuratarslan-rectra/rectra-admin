@@ -34,6 +34,7 @@ export default function LeadsTable() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<string>("ALL");
   const [toast, setToast] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -63,7 +64,7 @@ export default function LeadsTable() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Bu talebi silmek istediğinize emin misiniz?")) return;
+    setConfirmDeleteId(null);
     await fetch(`/api/leads/${id}`, { method: "DELETE" });
     showToast("Talep silindi");
     load();
@@ -161,9 +162,16 @@ export default function LeadsTable() {
                     {new Date(l.createdAt).toLocaleString("tr-TR")}
                   </td>
                   <td>
-                    <button className="tbtn danger" title="Sil" onClick={() => remove(l.id)}>
-                      ✕
-                    </button>
+                    {confirmDeleteId === l.id ? (
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", whiteSpace: "nowrap" }}>
+                        <button className="btn btn-line btn-sm" style={{ color: "#dc2626", borderColor: "#dc2626" }} onClick={() => remove(l.id)}>Evet, sil</button>
+                        <button className="btn btn-line btn-sm" onClick={() => setConfirmDeleteId(null)}>Vazgeç</button>
+                      </div>
+                    ) : (
+                      <button className="tbtn danger" title="Sil" onClick={() => setConfirmDeleteId(l.id)}>
+                        ✕
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
