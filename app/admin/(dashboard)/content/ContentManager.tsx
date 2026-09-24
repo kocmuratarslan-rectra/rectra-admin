@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import CalendarManager from "./CalendarManager";
+import CatalogManager from "./CatalogManager";
 
 type Item = {
   id: string;
@@ -12,6 +14,8 @@ type Item = {
 };
 
 const TABS = [
+  { key: "CALENDAR", label: "Takvim", hint: "" },
+  { key: "CATALOG", label: "Katalog", hint: "" },
   { key: "SERVICE", label: "Hizmetler", hint: "Not: Sitedeki 6 ana hizmet kartının metni Süper Admin · Site Kontrolü'nden düzenlenir (kategori/animasyon sistemine bağlı oldukları için sabit sayıdadır). Buradaki kayıtlar ek/alternatif hizmet listeleri için kullanılabilir." },
   { key: "TESTIMONIAL", label: "Referanslar", hint: "Canlı sitede \"Sonuç konuşsun\" bölümünde dönüşümlü gösterilir." },
   { key: "FAQ", label: "SSS", hint: "Canlı sitede \"Merak ettikleriniz\" bölümünde listelenir." },
@@ -43,6 +47,7 @@ export default function ContentManager() {
   }
 
   useEffect(() => {
+    if (tab === "CALENDAR" || tab === "CATALOG") return;
     load(tab);
     setEditingId(null);
   }, [tab]);
@@ -127,8 +132,42 @@ export default function ContentManager() {
           </button>
         ))}
       </div>
-      <div className="note" style={{ marginTop: 0, marginBottom: 18 }}>{activeTab.hint}</div>
+      {activeTab.hint && <div className="note" style={{ marginTop: 0, marginBottom: 18 }}>{activeTab.hint}</div>}
 
+      {tab === "CALENDAR" ? (
+        <CalendarManager />
+      ) : tab === "CATALOG" ? (
+        <CatalogManager />
+      ) : (
+        <ContentTabBody
+          tab={tab}
+          items={items}
+          loading={loading}
+          form={form}
+          setForm={setForm}
+          addItem={addItem}
+          editingId={editingId}
+          editForm={editForm}
+          setEditForm={setEditForm}
+          startEdit={startEdit}
+          saveEdit={saveEdit}
+          setEditingId={setEditingId}
+          togglePublished={togglePublished}
+          move={move}
+          remove={remove}
+        />
+      )}
+
+      <div className={`toast${toast ? " show" : ""}`}>{toast}</div>
+    </>
+  );
+}
+
+function ContentTabBody({
+  items, loading, form, setForm, addItem, editingId, editForm, setEditForm, startEdit, saveEdit, setEditingId, togglePublished, move, remove,
+}: any) {
+  return (
+    <>
       <div className="card" style={{ marginBottom: 20 }}>
         <form onSubmit={addItem} style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr 1fr auto" }}>
           <input className="inp" placeholder="Başlık" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -144,7 +183,7 @@ export default function ContentManager() {
         <p style={{ color: "var(--muted)" }}>Bu sekmede henüz kayıt yok.</p>
       ) : (
         <div className="grid" style={{ gap: 10 }}>
-          {items.map((item, idx) => (
+          {items.map((item: Item, idx: number) => (
             <div className="card" key={item.id} style={{ padding: 18 }}>
               {editingId === item.id ? (
                 <div style={{ display: "grid", gap: 10 }}>
@@ -191,8 +230,6 @@ export default function ContentManager() {
           ))}
         </div>
       )}
-
-      <div className={`toast${toast ? " show" : ""}`}>{toast}</div>
     </>
   );
 }

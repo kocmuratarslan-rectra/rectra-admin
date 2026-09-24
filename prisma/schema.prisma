@@ -23,6 +23,18 @@ enum ContentType {
   BLOG
 }
 
+// Hizmetler/Katalog/Takvim'de kullanılan sabit 6 kategori. Canlı sitedeki
+// katalog filtresi, kart animasyon sistemi ve metod panelleri bu 6 kategoriye
+// göre tasarlandığı için sabit tutulur (bkz. proje mimari kararı).
+enum TrainingCategory {
+  AI
+  LIDER
+  SOFT
+  IK
+  ALIM
+  KOC
+}
+
 model AdminUser {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -69,6 +81,57 @@ model SiteSection {
   order     Int      @default(0)
   visible   Boolean  @default(true)
   fields    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Açık Eğitim Takvimi'ndeki kartlar. Canlı site /api/calendar/public'ten
+// published:true olanları tarihe göre çekip render eder.
+model CalendarEvent {
+  id        String           @id @default(cuid())
+  title     String
+  category  TrainingCategory
+  date      DateTime
+  duration  String
+  location  String
+  certBadge String           @default("Sertifikalı")
+  hot       Boolean          @default(false)
+  seatText  String           @default("Kontenjan açık")
+  ctaUrl    String           @default("#teklif")
+  order     Int              @default(0)
+  published Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+// Katalog modalındaki eğitim listesi (önceden index.html'de sabit kodlu
+// TRAININGS dizisiydi). Canlı site /api/catalog/public'ten çekip katalog
+// motorunu (filtre/arama/sepet) bu veriyle besler.
+model CatalogItem {
+  id        String           @id @default(cuid())
+  title     String
+  category  TrainingCategory
+  duration  String
+  format    String
+  level     String
+  order     Int              @default(0)
+  published Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+// Süper Admin · Site Kontrolü'nden serbestçe eklenen yeni ana sayfa
+// bölümleri. Sabit 14 bölümün aksine tamamen admin tarafından yaratılır ve
+// silinebilir. Canlı sitede "teklif" bölümünden önceki custom-sections mount
+// noktasına, published sırasına göre render edilir.
+model CustomSection {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  icon      String   @default("✨")
+  color     String   @default("#0FA99A")
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

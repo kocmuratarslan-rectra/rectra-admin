@@ -13,7 +13,10 @@ type SiteSectionRow = {
 };
 
 export default async function SiteControlPage() {
-  const rows = await prisma.siteSection.findMany({ orderBy: { order: "asc" } });
+  const [rows, customRows] = await Promise.all([
+    prisma.siteSection.findMany({ orderBy: { order: "asc" } }),
+    prisma.customSection.findMany({ orderBy: { order: "asc" } }),
+  ]);
   const sections = (rows as SiteSectionRow[]).map((r) => ({
     id: r.id,
     key: r.key,
@@ -37,7 +40,7 @@ export default async function SiteControlPage() {
         <span className="fmt">🟢 Yayında: {sections.filter((s) => s.visible).length}</span>
         <span className="fmt">⚪ Gizli: {sections.filter((s) => !s.visible).length}</span>
       </div>
-      <SiteControl initialSections={sections} />
+      <SiteControl initialSections={sections} initialCustomSections={customRows} />
     </>
   );
 }

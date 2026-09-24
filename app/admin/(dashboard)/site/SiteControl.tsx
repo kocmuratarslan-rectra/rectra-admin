@@ -12,12 +12,36 @@ type Section = {
   fields: Record<string, string>;
 };
 
-export default function SiteControl({ initialSections }: { initialSections: Section[] }) {
+type CustomSection = {
+  id: string;
+  title: string;
+  body: string;
+  icon: string;
+  color: string;
+  order: number;
+  visible: boolean;
+};
+
+const emptyCustomForm = { title: "", body: "", icon: "✨", color: "#0FA99A" };
+
+export default function SiteControl({
+  initialSections,
+  initialCustomSections,
+}: {
+  initialSections: Section[];
+  initialCustomSections: CustomSection[];
+}) {
   const [sections, setSections] = useState<Section[]>(initialSections);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftFields, setDraftFields] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  const [customSections, setCustomSections] = useState<CustomSection[]>(initialCustomSections);
+  const [customForm, setCustomForm] = useState(emptyCustomForm);
+  const [customEditingId, setCustomEditingId] = useState<string | null>(null);
+  const [customEditForm, setCustomEditForm] = useState(emptyCustomForm);
+  const [addingCustom, setAddingCustom] = useState(false);
 
   const editing = useMemo(() => sections.find((s) => s.id === editingId) || null, [sections, editingId]);
 
@@ -78,6 +102,82 @@ export default function SiteControl({ initialSections }: { initialSections: Sect
     }
   }
 
+  async function addCustomSection(e: React.FormEvent) {
+    e.preventDefault();
+    if (!customForm.title || !customForm.body) return;
+    const res = await fetch("/api/custom-sections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(customForm),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setCustomSections((prev) => [...prev, data.section]);
+      setCustomForm(emptyCustomForm);
+      setAddingCustom(false);
+      showToast(`"${data.section.title}" yeni bölüm olarak siteye eklendi`);
+    } else {
+      showToast("Bölüm eklenemedi, tekrar deneyin.");
+    }
+  }
+
+  function startCustomEdit(s: CustomSection) {
+    setCustomEditingId(s.id);
+    setCustomEditForm({ title: s.title, body: s.body, icon: s.icon, color: s.color });
+  }
+
+  async function saveCustomEdit(id: string) {
+    const res = await fetch(`/api/custom-sections/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(customEditForm),
+    });
+    if (res.ok) {
+      setCustomSections((prev) => prev.map((s) => (s.id === id ? { ...s, ...customEditForm } : s)));
+      setCustomEditingId(null);
+      showToast("Bölüm güncellendi — birkaç saniye içinde sitede görünür");
+    } else {
+      showToast("Kaydedilemedi, tekrar deneyin.");
+    }
+  }
+
+  async function toggleCustomVisible(s: CustomSection) {
+    const next = !s.visible;
+    setCustomSections((prev) => prev.map((x) => (x.id === s.id ? { ...x, visible: next } : x)));
+    await fetch(`/api/custom-sections/${s.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ visible: next }),
+    });
+    showToast(next ? `"${s.title}" canlı sitede yayına alındı` : `"${s.title}" canlı siteden gizlendi`);
+  }
+
+  async function moveCustom(index: number, dir: -1 | 1) {
+    const arr = [...customSections];
+    const target = index + dir;
+    if (target < 0 || target >= arr.length) return;
+    [arr[index], arr[target]] = [arr[target], arr[index]];
+    setCustomSections(arr);
+    await Promise.all(
+      arr.map((s, i) =>
+        fetch(`/api/custom-sections/${s.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: i }),
+        })
+      )
+    );
+  }
+
+  async function removeCustomSection(id: string, title: string) {
+    if (!confirm(`"${title}" bölümünü kalıcı olarak silmek istediğinize emin misiniz?`)) return;
+    const res = await fetch(`/api/custom-sections/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setCustomSections((prev) => prev.filter((s) => s.id !== id));
+      showToast("Bölüm silindi");
+    }
+  }
+
   return (
     <div className="grid sa-grid">
       <div>
@@ -108,7 +208,7 @@ export default function SiteControl({ initialSections }: { initialSections: Sect
         ))}
 
         <div className="note">
-          Yeni bölüm ekleme ve canlı sitede fiziksel sıralama, Faz 2'de eklenecek (bkz. Blog &amp; SEO fazı sonrası site geliştirmeleri). Şu an metin/görünürlük değişiklikleri anında canlıya yansır.
+          Aşağıdaki 14 bölüm sitenin sabit tasarımına bağlıdır (sırası, metni ve görünürlüğü buradan yönetilir). Tamamen yeni bir bölüm eklemek için aşağıdaki "Özel Bölümler" alanını kullanın — sitede Teklif Al bölümünden hemen önce görünür.
         </div>
 
         {editing && (
@@ -143,6 +243,73 @@ export default function SiteControl({ initialSections }: { initialSections: Sect
               <button className="btn btn-line" onClick={closeEditor} disabled={saving}>Vazgeç</button>
             </div>
           </div>
+        )}
+
+        <div className="sec-title" style={{ marginTop: 28 }}>
+          Özel Bölümler
+          <small>Tamamen yeni ana sayfa içeriği — sizin eklediğiniz</small>
+        </div>
+
+        {customSections.length === 0 && !addingCustom && (
+          <div className="note" style={{ marginBottom: 12 }}>Henüz özel bölüm eklemediniz.</div>
+        )}
+
+        {customSections.map((s, i) => (
+          <div key={s.id}>
+            {customEditingId === s.id ? (
+              <div className="card" style={{ marginBottom: 10, padding: 16 }}>
+                <div style={{ display: "grid", gap: 10 }}>
+                  <input className="inp" placeholder="Başlık" value={customEditForm.title} onChange={(e) => setCustomEditForm({ ...customEditForm, title: e.target.value })} />
+                  <textarea className="inp" rows={3} placeholder="Metin" value={customEditForm.body} onChange={(e) => setCustomEditForm({ ...customEditForm, body: e.target.value })} />
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <input className="inp" style={{ width: 70 }} value={customEditForm.icon} onChange={(e) => setCustomEditForm({ ...customEditForm, icon: e.target.value })} />
+                    <input className="inp" type="color" style={{ width: 60, padding: 4 }} value={customEditForm.color} onChange={(e) => setCustomEditForm({ ...customEditForm, color: e.target.value })} />
+                  </div>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button className="btn btn-teal btn-sm" onClick={() => saveCustomEdit(s.id)}>Kaydet</button>
+                    <button className="btn btn-line btn-sm" onClick={() => setCustomEditingId(null)}>Vazgeç</button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className={`trow${s.visible ? "" : " dis"}`}>
+                <span className="ticon" style={{ background: s.color, color: "#fff" }}>{s.icon}</span>
+                <span className="tname">
+                  {s.title}
+                  <small>özel bölüm</small>
+                </span>
+                <button className="tbtn" title="Yukarı" onClick={() => moveCustom(i, -1)} disabled={i === 0}>↑</button>
+                <button className="tbtn" title="Aşağı" onClick={() => moveCustom(i, 1)} disabled={i === customSections.length - 1}>↓</button>
+                <label className="tgl" title={s.visible ? "Gizle" : "Yayına al"}>
+                  <input type="checkbox" checked={s.visible} onChange={() => toggleCustomVisible(s)} />
+                  <i></i>
+                </label>
+                <button className="tbtn" title="Düzenle" onClick={() => startCustomEdit(s)}>✎</button>
+                <button className="tbtn danger" title="Sil" onClick={() => removeCustomSection(s.id, s.title)}>✕</button>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {addingCustom ? (
+          <form onSubmit={addCustomSection} className="card" style={{ marginTop: 10, padding: 16 }}>
+            <div style={{ display: "grid", gap: 10 }}>
+              <input className="inp" placeholder="Bölüm başlığı" value={customForm.title} onChange={(e) => setCustomForm({ ...customForm, title: e.target.value })} />
+              <textarea className="inp" rows={3} placeholder="Bölüm metni" value={customForm.body} onChange={(e) => setCustomForm({ ...customForm, body: e.target.value })} />
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <label style={{ fontSize: 12, color: "var(--muted)" }}>İkon</label>
+                <input className="inp" style={{ width: 70 }} value={customForm.icon} onChange={(e) => setCustomForm({ ...customForm, icon: e.target.value })} />
+                <label style={{ fontSize: 12, color: "var(--muted)" }}>Renk</label>
+                <input className="inp" type="color" style={{ width: 60, padding: 4 }} value={customForm.color} onChange={(e) => setCustomForm({ ...customForm, color: e.target.value })} />
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button type="submit" className="btn btn-teal btn-sm">Bölümü Ekle ve Yayınla</button>
+                <button type="button" className="btn btn-line btn-sm" onClick={() => { setAddingCustom(false); setCustomForm(emptyCustomForm); }}>Vazgeç</button>
+              </div>
+            </div>
+          </form>
+        ) : (
+          <button className="btn btn-line" style={{ marginTop: 10 }} onClick={() => setAddingCustom(true)}>+ Yeni Bölüm Ekle</button>
         )}
       </div>
 

@@ -62,6 +62,72 @@ async function main() {
     }
   }
 
+  // ==== Açık Eğitim Takvimi (canlı sitedeki GERÇEK mevcut 6 etkinlik) ====
+  // Canlı site bunları /api/calendar/public'ten çekip #takvim bölümünde
+  // tarihe göre render eder (geri sayım, koltuk durumu dahil).
+  const calendarEvents: {
+    title: string; category: "AI" | "LIDER" | "SOFT" | "IK" | "ALIM" | "KOC";
+    date: string; duration: string; location: string; hot: boolean; seatText: string; order: number;
+  }[] = [
+    { title: "Yöneticiler için Üretken Yapay Zekâ", category: "AI", date: "2026-07-15", duration: "1 Gün", location: "İstanbul + Online", hot: true, seatText: "Son 6 koltuk", order: 1 },
+    { title: "İlk Kademe Yönetici Gelişim Programı", category: "LIDER", date: "2026-07-22", duration: "2 Gün", location: "İstanbul", hot: true, seatText: "Son 11 koltuk", order: 2 },
+    { title: "Yetkinlik Bazlı Mülakat Teknikleri", category: "IK", date: "2026-08-05", duration: "1 Gün", location: "Online", hot: false, seatText: "Kontenjan açık", order: 3 },
+    { title: "Profesyonel Koçluk Programı — Güz", category: "KOC", date: "2026-08-18", duration: "12 Hafta", location: "Hibrit", hot: true, seatText: "Erken kayıt %15", order: 4 },
+    { title: "İK'da Yapay Zekâ: Uygulama Atölyesi", category: "AI", date: "2026-09-09", duration: "1 Gün", location: "İstanbul", hot: false, seatText: "Kontenjan açık", order: 5 },
+    { title: "Stratejik Düşünme ve Karar Alma", category: "LIDER", date: "2026-09-24", duration: "1 Gün", location: "Ankara", hot: false, seatText: "Kontenjan açık", order: 6 },
+  ];
+  for (const ev of calendarEvents) {
+    const existing = await prisma.calendarEvent.findFirst({ where: { title: ev.title, date: new Date(ev.date + "T00:00:00.000Z") } });
+    if (!existing) {
+      await prisma.calendarEvent.create({
+        data: {
+          title: ev.title, category: ev.category as any, date: new Date(ev.date + "T00:00:00.000Z"),
+          duration: ev.duration, location: ev.location, hot: ev.hot, seatText: ev.seatText, order: ev.order,
+        },
+      });
+    }
+  }
+
+  // ==== Katalog (canlı sitedeki GERÇEK mevcut 26 eğitim — eski TRAININGS dizisi) ====
+  // Canlı site bunları /api/catalog/public'ten çekip katalog modalının
+  // filtre/arama/sepet motorunu (openCatalog/renderGrid) bu veriyle besler.
+  const catalogItems: { title: string; category: "AI" | "LIDER" | "SOFT" | "IK" | "ALIM" | "KOC"; duration: string; format: string; level: string; order: number }[] = [
+    { title: "Çalışanlar için Yapay Zekâ Okuryazarlığı", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Temel", order: 1 },
+    { title: "Yöneticiler için Üretken Yapay Zekâ ve Strateji", category: "AI", duration: "1 Gün", format: "Yüz yüze", level: "Yönetici", order: 2 },
+    { title: "Prompt Mühendisliği Atölyesi", category: "AI", duration: "1 Gün", format: "Online", level: "Orta", order: 3 },
+    { title: "İK'da Yapay Zekâ: Uygulama Atölyesi", category: "AI", duration: "1 Gün", format: "Yüz yüze", level: "İK Profesyoneli", order: 4 },
+    { title: "Kurumsal Yapay Zekâ Politikası Tasarımı", category: "AI", duration: "½ Gün", format: "Danışmanlık + Atölye", level: "Üst Yönetim", order: 5 },
+    { title: "İlk Kademe Yönetici Gelişim Programı", category: "LIDER", duration: "2 Gün", format: "Yüz yüze", level: "Yeni Yönetici", order: 6 },
+    { title: "Liderlik Gelişim Programı (Modüler)", category: "LIDER", duration: "4×1 Gün", format: "Hibrit", level: "Orta/Üst Kademe", order: 7 },
+    { title: "Değişim Yönetimi ve Liderliği", category: "LIDER", duration: "1 Gün", format: "Yüz yüze", level: "Yönetici", order: 8 },
+    { title: "Stratejik Düşünme ve Karar Alma", category: "LIDER", duration: "1 Gün", format: "Yüz yüze", level: "Yönetici", order: 9 },
+    { title: "Delegasyon ve Geri Bildirim Ustalığı", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 10 },
+    { title: "Etkili İletişim ve Dinleme", category: "SOFT", duration: "1 Gün", format: "Yüz yüze", level: "Tüm Çalışanlar", order: 11 },
+    { title: "Sunum Becerileri: Sahnede Etki", category: "SOFT", duration: "1 Gün", format: "Yüz yüze", level: "Tüm Çalışanlar", order: 12 },
+    { title: "Zaman ve Öncelik Yönetimi", category: "SOFT", duration: "½ Gün", format: "Online", level: "Tüm Çalışanlar", order: 13 },
+    { title: "Problem Çözme ve Analitik Düşünme", category: "SOFT", duration: "1 Gün", format: "Yüz yüze", level: "Tüm Çalışanlar", order: 14 },
+    { title: "Stres ve Tükenmişlik Yönetimi", category: "SOFT", duration: "½ Gün", format: "Online", level: "Tüm Çalışanlar", order: 15 },
+    { title: "Takım Çalışması ve İş Birliği", category: "SOFT", duration: "1 Gün", format: "Yüz yüze", level: "Ekipler", order: 16 },
+    { title: "Performans Yönetimi Sistemi Kurulumu", category: "IK", duration: "Proje", format: "Danışmanlık", level: "İK Ekibi", order: 17 },
+    { title: "Yetkinlik Bazlı Mülakat Teknikleri", category: "IK", duration: "1 Gün", format: "Online", level: "İK / Yönetici", order: 18 },
+    { title: "Yetenek Yönetimi ve Yedekleme Planı", category: "IK", duration: "1 Gün", format: "Yüz yüze", level: "İK Ekibi", order: 19 },
+    { title: "İK Analitiği ve Veriyle Karar", category: "IK", duration: "1 Gün", format: "Online", level: "İK Profesyoneli", order: 20 },
+    { title: "Yönetici İşe Alımı (Executive Search)", category: "ALIM", duration: "Proje", format: "Hizmet", level: "C-Level / Direktör", order: 21 },
+    { title: "Assessment Center Tasarımı ve Uygulaması", category: "ALIM", duration: "Proje", format: "Hizmet", level: "Tüm Kademeler", order: 22 },
+    { title: "Kişilik ve Yetkinlik Envanterleri", category: "ALIM", duration: "Sürekli", format: "Dijital", level: "Tüm Kademeler", order: 23 },
+    { title: "Yönetici Koçluğu (Executive Coaching)", category: "KOC", duration: "6-12 Seans", format: "Birebir", level: "Yönetici", order: 24 },
+    { title: "Takım Koçluğu Programı", category: "KOC", duration: "4-8 Seans", format: "Ekip", level: "Ekipler", order: 25 },
+    { title: "Profesyonel Koçluk Programı (ICF Yolu)", category: "KOC", duration: "12 Hafta", format: "Hibrit", level: "Koç Adayı", order: 26 },
+  ];
+  for (const c of catalogItems) {
+    const existing = await prisma.catalogItem.findFirst({ where: { title: c.title, category: c.category as any } });
+    if (!existing) {
+      await prisma.catalogItem.create({
+        data: { title: c.title, category: c.category as any, duration: c.duration, format: c.format, level: c.level, order: c.order },
+      });
+    }
+  }
+
   // ==== Site Bölümleri (Süper Admin · Site Kontrolü) ====
   // key + fields isimleri, canlı sitedeki (rectra-site/index.html) data-cms
   // etiketleriyle BİREBİR eşleşir (ör. key="hero", field="headline" →
