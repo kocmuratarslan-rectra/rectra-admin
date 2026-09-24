@@ -44,7 +44,12 @@ export default function CalendarManager() {
 
   function showToast(msg: string) {
     setToast(msg);
-    setTimeout(() => setToast(null), 2200);
+    setTimeout(() => setToast(null), 3200);
+  }
+
+  function friendlyErr(status: number, err: any) {
+    if (status === 401) return "Oturum süresi dolmuş — sayfayı yenileyip tekrar giriş yapın.";
+    return err?.error || `hata ${status}`;
   }
 
   async function load() {
@@ -62,14 +67,23 @@ export default function CalendarManager() {
   async function addItem(e: React.FormEvent) {
     e.preventDefault();
     if (!form.title || !form.date) return;
-    await fetch("/api/calendar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    setForm(emptyForm);
-    showToast("Etkinlik eklendi");
-    load();
+    try {
+      const res = await fetch("/api/calendar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Eklenemedi: ${friendlyErr(res.status, err)}`);
+        return;
+      }
+      setForm(emptyForm);
+      showToast("Etkinlik eklendi");
+      load();
+    } catch {
+      showToast("Eklenemedi: bağlantı hatası, tekrar deneyin.");
+    }
   }
 
   function startEdit(item: EventItem) {
@@ -86,30 +100,57 @@ export default function CalendarManager() {
   }
 
   async function saveEdit(id: string) {
-    await fetch(`/api/calendar/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editForm),
-    });
-    setEditingId(null);
-    showToast("Etkinlik güncellendi — birkaç saniye içinde sitede görünür");
-    load();
+    try {
+      const res = await fetch(`/api/calendar/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Güncellenemedi: ${friendlyErr(res.status, err)}`);
+        return;
+      }
+      setEditingId(null);
+      showToast("Etkinlik güncellendi — birkaç saniye içinde sitede görünür");
+      load();
+    } catch {
+      showToast("Güncellenemedi: bağlantı hatası, tekrar deneyin.");
+    }
   }
 
   async function togglePublished(item: EventItem) {
-    await fetch(`/api/calendar/${item.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ published: !item.published }),
-    });
-    load();
+    try {
+      const res = await fetch(`/api/calendar/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: !item.published }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Durum değiştirilemedi: ${friendlyErr(res.status, err)}`);
+        return;
+      }
+      load();
+    } catch {
+      showToast("Durum değiştirilemedi: bağlantı hatası.");
+    }
   }
 
   async function remove(id: string) {
     setConfirmDeleteId(null);
-    await fetch(`/api/calendar/${id}`, { method: "DELETE" });
-    showToast("Etkinlik silindi");
-    load();
+    try {
+      const res = await fetch(`/api/calendar/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Silinemedi: ${friendlyErr(res.status, err)}`);
+        return;
+      }
+      showToast("Etkinlik silindi");
+      load();
+    } catch {
+      showToast("Silinemedi: bağlantı hatası, tekrar deneyin.");
+    }
   }
 
   return (

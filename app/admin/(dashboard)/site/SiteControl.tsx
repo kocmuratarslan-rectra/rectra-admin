@@ -188,22 +188,74 @@ export default function SiteControl({
         </div>
 
         {sections.map((s, i) => (
-          <div className={`trow${s.visible ? "" : " dis"}`} key={s.id}>
-            <span className="ticon" style={{ background: s.color, color: "#fff" }}>{s.icon}</span>
-            <span className="tname">
-              {s.name}
-              <small>{s.key}</small>
-            </span>
-            <button className="tbtn" title="Yukarı" onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
-            <button className="tbtn" title="Aşağı" onClick={() => move(i, 1)} disabled={i === sections.length - 1}>↓</button>
-            <label className="tgl" title={s.visible ? "Gizle" : "Yayına al"}>
-              <input type="checkbox" checked={s.visible} onChange={() => toggleVisible(s)} />
-              <i></i>
-            </label>
-            {Object.keys(s.fields).length > 0 ? (
-              <button className="tbtn" title="Düzenle" onClick={() => openEditor(s)}>✎</button>
-            ) : (
-              <button className="tbtn" title="Bu bölümde düzenlenebilir metin yok, sadece gizle/göster" disabled>✎</button>
+          <div key={s.id}>
+            <div className={`trow${s.visible ? "" : " dis"}`}>
+              <span className="ticon" style={{ background: s.color, color: "#fff" }}>{s.icon}</span>
+              <span className="tname">
+                {s.name}
+                <small>{s.key}</small>
+              </span>
+              <button className="tbtn" title="Yukarı" onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
+              <button className="tbtn" title="Aşağı" onClick={() => move(i, 1)} disabled={i === sections.length - 1}>↓</button>
+              <label className="tgl" title={s.visible ? "Gizle" : "Yayına al"}>
+                <input type="checkbox" checked={s.visible} onChange={() => toggleVisible(s)} />
+                <i></i>
+              </label>
+              {Object.keys(s.fields).length > 0 ? (
+                <button className="tbtn" title="Düzenle" onClick={() => (editingId === s.id ? closeEditor() : openEditor(s))}>✎</button>
+              ) : (
+                <button className="tbtn" title="Bu bölümde düzenlenebilir metin yok, sadece gizle/göster" disabled>✎</button>
+              )}
+            </div>
+
+            {(s.key === "calendar" || s.key === "services") && (
+              <div className="note" style={{ marginTop: 6, marginBottom: 6 }}>
+                {s.key === "calendar"
+                  ? "Buradan yalnızca bölüm başlığı/alt başlığı ve görünürlüğü değişir. Tek tek eğitimleri eklemek, silmek veya tarihini değiştirmek için: İçerik (Hizmetler) → Takvim sekmesine gidin."
+                  : "Buradan yalnızca bölüm görünürlüğü değişir. Hizmet kartlarının metnini düzenlemek için aşağıdaki kartların üzerine tıklayın ya da İçerik (Hizmetler) → Hizmetler sekmesini kullanın."}
+                {s.key === "calendar" && (
+                  <>
+                    {" "}
+                    <a href="/admin/content?tab=CALENDAR" style={{ color: "var(--teal, #0FA99A)", fontWeight: 700 }}>
+                      Takvim yönetimine git →
+                    </a>
+                  </>
+                )}
+              </div>
+            )}
+
+            {editingId === s.id && editing && (
+              <div id="sec-editor" className="show card" style={{ marginTop: 8, marginBottom: 12 }}>
+                <div className="sec-title" style={{ margin: 0 }}>
+                  {editing.icon} {editing.name}
+                  <small>{editing.key}</small>
+                </div>
+                {Object.entries(draftFields).map(([field, value]) => (
+                  <div key={field}>
+                    <label>{field}</label>
+                    {value.length > 80 ? (
+                      <textarea
+                        className="inp"
+                        rows={3}
+                        value={value}
+                        onChange={(e) => setDraftFields((prev) => ({ ...prev, [field]: e.target.value }))}
+                      />
+                    ) : (
+                      <input
+                        className="inp"
+                        value={value}
+                        onChange={(e) => setDraftFields((prev) => ({ ...prev, [field]: e.target.value }))}
+                      />
+                    )}
+                  </div>
+                ))}
+                <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+                  <button className="btn btn-teal" onClick={saveEditor} disabled={saving}>
+                    {saving ? "Kaydediliyor..." : "Kaydet ve Yayınla"}
+                  </button>
+                  <button className="btn btn-line" onClick={closeEditor} disabled={saving}>Vazgeç</button>
+                </div>
+              </div>
             )}
           </div>
         ))}
@@ -211,40 +263,6 @@ export default function SiteControl({
         <div className="note">
           Aşağıdaki 14 bölüm sitenin sabit tasarımına bağlıdır (sırası, metni ve görünürlüğü buradan yönetilir). Tamamen yeni bir bölüm eklemek için aşağıdaki "Özel Bölümler" alanını kullanın — sitede Teklif Al bölümünden hemen önce görünür.
         </div>
-
-        {editing && (
-          <div id="sec-editor" className="show card" style={{ marginTop: 16 }}>
-            <div className="sec-title" style={{ margin: 0 }}>
-              {editing.icon} {editing.name}
-              <small>{editing.key}</small>
-            </div>
-            {Object.entries(draftFields).map(([field, value]) => (
-              <div key={field}>
-                <label>{field}</label>
-                {value.length > 80 ? (
-                  <textarea
-                    className="inp"
-                    rows={3}
-                    value={value}
-                    onChange={(e) => setDraftFields((prev) => ({ ...prev, [field]: e.target.value }))}
-                  />
-                ) : (
-                  <input
-                    className="inp"
-                    value={value}
-                    onChange={(e) => setDraftFields((prev) => ({ ...prev, [field]: e.target.value }))}
-                  />
-                )}
-              </div>
-            ))}
-            <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-              <button className="btn btn-teal" onClick={saveEditor} disabled={saving}>
-                {saving ? "Kaydediliyor..." : "Kaydet ve Yayınla"}
-              </button>
-              <button className="btn btn-line" onClick={closeEditor} disabled={saving}>Vazgeç</button>
-            </div>
-          </div>
-        )}
 
         <div className="sec-title" style={{ marginTop: 28 }}>
           Özel Bölümler

@@ -35,7 +35,12 @@ export default function CatalogManager() {
 
   function showToast(msg: string) {
     setToast(msg);
-    setTimeout(() => setToast(null), 2200);
+    setTimeout(() => setToast(null), 3200);
+  }
+
+  function friendlyErr(status: number, err: any) {
+    if (status === 401) return "Oturum süresi dolmuş — sayfayı yenileyip tekrar giriş yapın.";
+    return err?.error || `hata ${status}`;
   }
 
   async function load() {
@@ -53,14 +58,23 @@ export default function CatalogManager() {
   async function addItem(e: React.FormEvent) {
     e.preventDefault();
     if (!form.title) return;
-    await fetch("/api/catalog", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    setForm(emptyForm);
-    showToast("Eğitim kataloğa eklendi");
-    load();
+    try {
+      const res = await fetch("/api/catalog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Eklenemedi: ${friendlyErr(res.status, err)}`);
+        return;
+      }
+      setForm(emptyForm);
+      showToast("Eğitim kataloğa eklendi");
+      load();
+    } catch {
+      showToast("Eklenemedi: bağlantı hatası, tekrar deneyin.");
+    }
   }
 
   function startEdit(item: CatalogEntry) {
@@ -69,30 +83,56 @@ export default function CatalogManager() {
   }
 
   async function saveEdit(id: string) {
-    await fetch(`/api/catalog/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editForm),
-    });
-    setEditingId(null);
-    showToast("Eğitim güncellendi — birkaç saniye içinde sitede görünür");
-    load();
+    try {
+      const res = await fetch(`/api/catalog/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Güncellenemedi: ${friendlyErr(res.status, err)}`);
+        return;
+      }
+      setEditingId(null);
+      showToast("Eğitim güncellendi — birkaç saniye içinde sitede görünür");
+      load();
+    } catch {
+      showToast("Güncellenemedi: bağlantı hatası, tekrar deneyin.");
+    }
   }
 
   async function togglePublished(item: CatalogEntry) {
-    await fetch(`/api/catalog/${item.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ published: !item.published }),
-    });
-    load();
+    try {
+      const res = await fetch(`/api/catalog/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: !item.published }),
+      });
+      if (!res.ok) {
+        showToast(`Durum değiştirilemedi (${res.status})`);
+        return;
+      }
+      load();
+    } catch {
+      showToast("Durum değiştirilemedi: bağlantı hatası.");
+    }
   }
 
   async function remove(id: string) {
     setConfirmDeleteId(null);
-    await fetch(`/api/catalog/${id}`, { method: "DELETE" });
-    showToast("Eğitim silindi");
-    load();
+    try {
+      const res = await fetch(`/api/catalog/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Silinemedi: ${friendlyErr(res.status, err)}`);
+        return;
+      }
+      showToast("Eğitim silindi");
+      load();
+    } catch {
+      showToast("Silinemedi: bağlantı hatası, tekrar deneyin.");
+    }
   }
 
   const shown = filter === "all" ? items : items.filter((i) => i.category === filter);

@@ -24,8 +24,16 @@ const TABS = [
 
 const emptyForm = { title: "", subtitle: "", body: "", category: "" };
 
+function getInitialTab() {
+  if (typeof window === "undefined") return "SERVICE";
+  const params = new URLSearchParams(window.location.search);
+  const t = params.get("tab");
+  const valid = ["CALENDAR", "CATALOG", "SERVICE", "TESTIMONIAL", "FAQ", "BLOG"];
+  return t && valid.includes(t) ? t : "SERVICE";
+}
+
 export default function ContentManager() {
-  const [tab, setTab] = useState("SERVICE");
+  const [tab, setTab] = useState(getInitialTab);
   const [items, setItems] = useState<Item[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(true);
@@ -36,7 +44,12 @@ export default function ContentManager() {
 
   function showToast(msg: string) {
     setToast(msg);
-    setTimeout(() => setToast(null), 2200);
+    setTimeout(() => setToast(null), 3200);
+  }
+
+  function friendlyErr(status: number, err: any) {
+    if (status === 401) return "Oturum süresi dolmuş — sayfayı yenileyip tekrar giriş yapın.";
+    return err?.error || `hata ${status}`;
   }
 
   async function load(type: string) {
@@ -56,14 +69,23 @@ export default function ContentManager() {
   async function addItem(e: React.FormEvent) {
     e.preventDefault();
     if (!form.title) return;
-    await fetch(`/api/content/${tab}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    setForm(emptyForm);
-    showToast("Kayıt eklendi");
-    load(tab);
+    try {
+      const res = await fetch(`/api/content/${tab}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Eklenemedi: ${friendlyErr(res.status, err)}`);
+        return;
+      }
+      setForm(emptyForm);
+      showToast("Kayıt eklendi");
+      load(tab);
+    } catch {
+      showToast("Eklenemedi: bağlantı hatası, tekrar deneyin.");
+    }
   }
 
   function startEdit(item: Item) {
@@ -77,23 +99,41 @@ export default function ContentManager() {
   }
 
   async function saveEdit(id: string) {
-    await fetch(`/api/content/${tab}/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editForm),
-    });
-    setEditingId(null);
-    showToast("Değişiklik kaydedildi — birkaç saniye içinde sitede görünür");
-    load(tab);
+    try {
+      const res = await fetch(`/api/content/${tab}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Kaydedilemedi: ${friendlyErr(res.status, err)}`);
+        return;
+      }
+      setEditingId(null);
+      showToast("Değişiklik kaydedildi — birkaç saniye içinde sitede görünür");
+      load(tab);
+    } catch {
+      showToast("Kaydedilemedi: bağlantı hatası, tekrar deneyin.");
+    }
   }
 
   async function togglePublished(item: Item) {
-    await fetch(`/api/content/${tab}/${item.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ published: !item.published }),
-    });
-    load(tab);
+    try {
+      const res = await fetch(`/api/content/${tab}/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: !item.published }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Durum değiştirilemedi: ${friendlyErr(res.status, err)}`);
+        return;
+      }
+      load(tab);
+    } catch {
+      showToast("Durum değiştirilemedi: bağlantı hatası.");
+    }
   }
 
   async function move(item: Item, dir: -1 | 1) {
@@ -117,9 +157,18 @@ export default function ContentManager() {
 
   async function remove(id: string) {
     setConfirmDeleteId(null);
-    await fetch(`/api/content/${tab}/${id}`, { method: "DELETE" });
-    showToast("Kayıt silindi");
-    load(tab);
+    try {
+      const res = await fetch(`/api/content/${tab}/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Silinemedi: ${friendlyErr(res.status, err)}`);
+        return;
+      }
+      showToast("Kayıt silindi");
+      load(tab);
+    } catch {
+      showToast("Silinemedi: bağlantı hatası, tekrar deneyin.");
+    }
   }
 
   const activeTab = TABS.find((t) => t.key === tab)!;
