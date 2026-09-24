@@ -29,6 +29,39 @@ async function main() {
     }
   }
 
+  // ==== SSS (canlı sitedeki GERÇEK mevcut sorular/cevaplar) ====
+  // Canlı site artık bu kayıtları /api/content/FAQ'dan çeker (bkz. index.html).
+  // Admin panelinde ekleme/düzenleme/silme yapılana kadar site aynı kalır.
+  const faqs = [
+    { title: "Kurumsal eğitim fiyatları nasıl belirlenir?", body: "Fiyat; katılımcı sayısı, program süresi, format (yüz yüze / online / hibrit) ve içerik özelleştirme derinliğine göre belirlenir. İhtiyaç analizi görüşmesi ücretsizdir ve teklifinizi 24 saat içinde iletiriz.", order: 1 },
+    { title: "Katalogdan seçtiğim eğitimlerle kendi programımı oluşturabilir miyim?", body: "Evet — bu tam olarak katalog deneyimimizin amacı. Katalogda arama yapın, \"Programa Ekle\" ile başlıkları seçin ve tek tıkla talep gönderin. Uzmanlarımız seçiminizi kuruma özel bir gelişim yolculuğuna dönüştürüp 24 saat içinde teklifle döner.", order: 2 },
+    { title: "Dijital eğitim ve iş simülasyon platformlarına kimler erişebilir?", body: "Rectra Business School katılımcıları üye girişiyle erişir. Eğitim öncesi mikro dersler ve ön testler, eğitim sonrası simülasyon senaryoları ve gelişim raporları üyelik panelinizde toplanır.", order: 3 },
+    { title: "Yapay zekâ eğitimi hangi departmanlara verilmeli?", body: "Önerimiz katmanlı yaklaşımdır: tüm çalışanlara temel yapay zekâ okuryazarlığı, yöneticilere strateji ve etik boyutu, İK/pazarlama/operasyon gibi fonksiyonlara ise uygulamalı atölyeler. Kuruma özel yol haritasını birlikte çıkarırız.", order: 4 },
+    { title: "Eğitim sonuçlarını nasıl ölçüyorsunuz?", body: "Kirkpatrick modeliyle dört seviyede: memnuniyet, öğrenme (ön/son test), davranış değişimi (30-60-90 gün takibi) ve iş sonuçlarına etki. Yönetime raporlanabilir çıktılar sunarız.", order: 5 },
+    { title: "Azerbaycan'da hizmet veriyor musunuz?", body: "Evet. Bakü başta olmak üzere Azerbaycan genelinde yüz yüze ve online programlar düzenliyoruz. Azerice içerik desteği sağlanabilir.", order: 6 },
+  ];
+  for (const f of faqs) {
+    const existing = await prisma.contentItem.findFirst({ where: { type: "FAQ", title: f.title } });
+    if (!existing) {
+      await prisma.contentItem.create({ data: { type: "FAQ", title: f.title, body: f.body, order: f.order } });
+    }
+  }
+
+  // ==== Referanslar (canlı sitedeki GERÇEK mevcut 3 referans) ====
+  // title = kişi adı, subtitle = unvan/kurum, body = alıntı metni.
+  // Canlı site bunları /api/content/TESTIMONIAL'dan çekip dönüşümlü gösterir.
+  const testimonials = [
+    { title: "Elif K.", subtitle: "İK Direktörü, Perakende — 4.200 çalışan", body: "RECTRA'nın liderlik gelişim programı sonrası ilk kademe yönetici devir hızımız %30 azaldı. Eğitim değil, dönüşüm aldık.", order: 1 },
+    { title: "Murat T.", subtitle: "Genel Müdür, Üretim — Bursa", body: "Yapay zekâ atölyesinden bir hafta sonra ekipler kendi otomasyonlarını kurmaya başladı. Yatırımın geri dönüşünü ilk ayda gördük.", order: 2 },
+    { title: "Ayşən M.", subtitle: "HR Business Partner — Bakü, Azerbaycan", body: "Eğitim öncesi dijital hazırlık ve sonrasındaki simülasyon takibi, klasik eğitim firmalarında görmediğimiz bir deneyimdi.", order: 3 },
+  ];
+  for (const t of testimonials) {
+    const existing = await prisma.contentItem.findFirst({ where: { type: "TESTIMONIAL", title: t.title } });
+    if (!existing) {
+      await prisma.contentItem.create({ data: { type: "TESTIMONIAL", title: t.title, subtitle: t.subtitle, body: t.body, order: t.order } });
+    }
+  }
+
   // ==== Site Bölümleri (Süper Admin · Site Kontrolü) ====
   // key + fields isimleri, canlı sitedeki (rectra-site/index.html) data-cms
   // etiketleriyle BİREBİR eşleşir (ör. key="hero", field="headline" →
@@ -43,6 +76,15 @@ async function main() {
     key: string; icon: string; name: string; color: string; order: number; visible: boolean;
     fields: Record<string, string>;
   }[] = [
+    { key: "nav", icon: "🧭", name: "Üst Menü (Navigasyon)", color: "#1a2145", order: 0, visible: true, fields: {
+      link_school: "Business School",
+      link_catalog: "Katalog",
+      link_calendar: "Açık Eğitimler",
+      link_ecosystem: "Ekosistem",
+      link_faq: "SSS",
+      link_login: "Giriş",
+      link_cta: "Teklif Al",
+    }},
     { key: "hero", icon: "✨", name: "Hero — 3D Banner", color: "#0B1026", order: 1, visible: true, fields: {
       eyebrow: "Rectra Business School · Danışmanlık · İşe Alım · Koçluk",
       slogan: "Discover and develop potential for the future.",
@@ -59,6 +101,27 @@ async function main() {
     { key: "services", icon: "🎓", name: "Business School Kartları", color: "#0FA99A", order: 4, visible: true, fields: {
       title: "Beş gelişim fakültesi,<br>tek okul, tek hedef",
       subtitle: "Her fakülteye tıklayın: önce o alanı nasıl tasarladığımızı görün, sonra kataloğu keşfedip kendi programınızı oluşturun.",
+      // 6 kartın başlık/açıklama/etiket metinleri (kart sayısı ve animasyon/
+      // kategori sistemi sabittir — bkz. Task #19 tasarım kararı — sadece
+      // metinler buradan düzenlenir).
+      card_ai_title: "Yapay Zekâ Fakültesi",
+      card_ai_desc: "Temel okuryazarlıktan yönetici stratejisine, İK'da yapay zekâdan prompt tekniklerine uygulamalı programlar.",
+      card_ai_tags: "<span>AI Okuryazarlığı</span><span>Prompt Mühendisliği</span><span>İK'da AI</span>",
+      card_lider_title: "Liderlik Fakültesi",
+      card_lider_desc: "İlk kademe yöneticiden üst düzey lidere; 70-20-10 modeliyle tasarlanan gelişim yolculukları.",
+      card_lider_tags: "<span>Liderlik Gelişim Programı</span><span>Değişim Yönetimi</span>",
+      card_soft_title: "Soft Skills Fakültesi",
+      card_soft_desc: "İletişim, sunum, problem çözme; Kolb döngüsüyle yaşayarak öğrenilen beceriler.",
+      card_soft_tags: "<span>Etkili İletişim</span><span>Sunum Becerileri</span>",
+      card_ik_title: "İK Fakültesi &amp; Danışmanlık",
+      card_ik_desc: "Performans sisteminden yetenek yönetimine; Kirkpatrick ölçümüyle kanıtlanan İK dönüşümü.",
+      card_ik_tags: "<span>Performans Yönetimi</span><span>Yetenek Yönetimi</span>",
+      card_alim_title: "İşe Alım &amp; Headhunting",
+      card_alim_desc: "Executive search'ten toplu projelere; assessment center ile isabetli yetenek kararları.",
+      card_alim_tags: "<span>Executive Search</span><span>Assessment Center</span>",
+      card_koc_title: "Koçluk Fakültesi &amp; Akademi",
+      card_koc_desc: "Yönetici ve takım koçluğu; Potential Coaching Academy ile ICF yolculuğunuz.",
+      card_koc_tags: "<span>Executive Coaching</span><span>ICF Programları</span>",
     }},
     { key: "platforms", icon: "🖥", name: "Dijital Platformlar", color: "#111838", order: 5, visible: true, fields: {
       title: "Eğitim bir gün sürer.<br>Platform her gün yanınızda.",
@@ -101,20 +164,27 @@ async function main() {
   // bu şekilde silinmeyecektir (bkz. proje politikası: additive-only).
   await prisma.siteSection.deleteMany({ where: { key: { in: ["logos", "faculties", "contact"] } } });
 
+  // Bölüm zaten varsa: admin panelinde girilmiş GERÇEK değerleri ASLA ezme.
+  // Ama yeni bir sürümde o bölüme yeni bir alan (ör. kart metni, menü
+  // etiketi) eklendiyse, bu alan DB'deki mevcut satıra hiç yazılmaz (upsert
+  // update:{} yeni alanları görmez) — bu yüzden burada var olan fields JSON'u
+  // okuyup sadece eksik olan yeni anahtarları varsayılan değerleriyle
+  // ekliyoruz; halihazırda var olan (admin tarafından değiştirilmiş de
+  // olabilecek) hiçbir anahtar dokunulmadan kalır.
   for (const s of sections) {
-    await prisma.siteSection.upsert({
-      where: { key: s.key },
-      update: {}, // mevcut bölüm varsa admin panelinde yapılan değişikliği ezme
-      create: {
-        key: s.key,
-        icon: s.icon,
-        name: s.name,
-        color: s.color,
-        order: s.order,
-        visible: s.visible,
-        fields: s.fields,
-      },
-    });
+    const existingRow = await prisma.siteSection.findUnique({ where: { key: s.key } });
+    if (!existingRow) {
+      await prisma.siteSection.create({
+        data: { key: s.key, icon: s.icon, name: s.name, color: s.color, order: s.order, visible: s.visible, fields: s.fields },
+      });
+      continue;
+    }
+    const existingFields = (existingRow.fields as Record<string, string>) || {};
+    const hasNewKeys = Object.keys(s.fields).some((k) => !(k in existingFields));
+    if (hasNewKeys) {
+      const mergedFields = { ...s.fields, ...existingFields };
+      await prisma.siteSection.update({ where: { key: s.key }, data: { fields: mergedFields } });
+    }
   }
 
   console.log("Seed complete. Admin login:", email);

@@ -15,6 +15,21 @@ const createSchema = z.object({
   published: z.boolean().optional(),
 });
 
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Cache-Control": "public, max-age=30",
+  };
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders() });
+}
+
+// Oturumsuz istekler (canlı site dahil) sadece published:true kayıtları görür.
+// CORS açık: rectra-site.vercel.app buradan SSS ve Referanslar verisini çeker.
 export async function GET(_req: Request, { params }: { params: Promise<{ type: string }> }) {
   const { type: rawType } = await params;
   const type = rawType.toUpperCase();
@@ -24,7 +39,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ type: s
     where: { type: type as any, ...(session ? {} : { published: true }) },
     orderBy: { order: "asc" },
   });
-  return NextResponse.json({ items });
+  return NextResponse.json({ items }, { headers: session ? {} : corsHeaders() });
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ type: string }> }) {
