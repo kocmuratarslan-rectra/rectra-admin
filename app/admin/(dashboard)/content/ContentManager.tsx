@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import CalendarManager from "./CalendarManager";
 import CatalogManager from "./CatalogManager";
+import BlogManager from "./BlogManager";
 
 type Item = {
   id: string;
@@ -19,7 +20,7 @@ const TABS = [
   { key: "SERVICE", label: "Hizmetler", hint: "Not: Sitedeki 6 ana hizmet kartının metni Süper Admin · Site Kontrolü'nden düzenlenir (kategori/animasyon sistemine bağlı oldukları için sabit sayıdadır). Buradaki kayıtlar ek/alternatif hizmet listeleri için kullanılabilir." },
   { key: "TESTIMONIAL", label: "Referanslar", hint: "Canlı sitede \"Sonuç konuşsun\" bölümünde dönüşümlü gösterilir." },
   { key: "FAQ", label: "SSS", hint: "Canlı sitede \"Merak ettikleriniz\" bölümünde listelenir." },
-  { key: "BLOG", label: "Blog", hint: "Blog & SEO (AI) fazı henüz başlamadı — bu kayıtlar şu an sitede gösterilmiyor." },
+  { key: "BLOG", label: "Blog", hint: "" },
 ];
 
 const emptyForm = { title: "", subtitle: "", body: "", category: "" };
@@ -61,7 +62,7 @@ export default function ContentManager() {
   }
 
   useEffect(() => {
-    if (tab === "CALENDAR" || tab === "CATALOG") return;
+    if (tab === "CALENDAR" || tab === "CATALOG" || tab === "BLOG") return;
     load(tab);
     setEditingId(null);
   }, [tab]);
@@ -188,6 +189,8 @@ export default function ContentManager() {
         <CalendarManager />
       ) : tab === "CATALOG" ? (
         <CatalogManager />
+      ) : tab === "BLOG" ? (
+        <BlogManager />
       ) : (
         <ContentTabBody
           tab={tab}

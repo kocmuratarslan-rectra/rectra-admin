@@ -11,6 +11,13 @@ const updateSchema = z.object({
   category: z.string().max(100).optional().nullable(),
   order: z.number().int().optional(),
   published: z.boolean().optional(),
+  slug: z.string().max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional().nullable(),
+  excerpt: z.string().max(500).optional().nullable(),
+  content: z.string().max(50000).optional().nullable(),
+  coverImage: z.string().max(1000).optional().nullable(),
+  seoTitle: z.string().max(200).optional().nullable(),
+  seoDescription: z.string().max(300).optional().nullable(),
+  publishedAt: z.string().datetime().optional().nullable(),
 });
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -23,6 +30,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (!parsed.success) {
       return NextResponse.json({ error: "invalid_body", details: parsed.error.flatten() }, { status: 400 });
     }
+    let publishedAtValue: Date | null | undefined = parsed.data.publishedAt
+      ? new Date(parsed.data.publishedAt)
+      : undefined;
+    if (parsed.data.published === true && publishedAtValue === undefined) {
+      const existing = await prisma.contentItem.findUnique({ where: { id }, select: { publishedAt: true } });
+      if (existing && !existing.publishedAt) publishedAtValue = new Date();
+    }
     const item = await prisma.contentItem.update({
       where: { id },
       data: {
@@ -32,10 +46,20 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         category: parsed.data.category,
         order: parsed.data.order,
         published: parsed.data.published,
+        slug: parsed.data.slug,
+        excerpt: parsed.data.excerpt,
+        content: parsed.data.content,
+        coverImage: parsed.data.coverImage,
+        seoTitle: parsed.data.seoTitle,
+        seoDescription: parsed.data.seoDescription,
+        publishedAt: publishedAtValue,
       },
     });
     return NextResponse.json({ item });
-  } catch (e) {
+  } catch (e: any) {
+    if (e?.code === "P2002") {
+      return NextResponse.json({ error: "slug_taken", message: "Bu slug zaten kullanılıyor, farklı bir slug seçin." }, { status: 409 });
+    }
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 }

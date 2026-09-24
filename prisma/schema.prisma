@@ -65,6 +65,16 @@ model ContentItem {
   published Boolean     @default(true)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+
+  // Blog & SEO fazı (additive) — sadece type:BLOG kayıtlarında kullanılır,
+  // diğer tiplerde (SERVICE/TESTIMONIAL/FAQ) null kalır ve hiçbir şeyi bozmaz.
+  slug            String?   @unique
+  excerpt         String?
+  content         String?
+  coverImage      String?
+  seoTitle        String?
+  seoDescription  String?
+  publishedAt     DateTime?
 }
 
 // Canlı sitedeki (rectra-site) bölümleri temsil eder. Admin panelindeki

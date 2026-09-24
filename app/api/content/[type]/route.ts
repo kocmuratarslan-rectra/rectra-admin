@@ -13,6 +13,14 @@ const createSchema = z.object({
   category: z.string().max(100).optional().nullable(),
   order: z.number().int().optional(),
   published: z.boolean().optional(),
+  // Blog & SEO alanları (opsiyonel, sadece BLOG tipi için kullanılır)
+  slug: z.string().max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional().nullable(),
+  excerpt: z.string().max(500).optional().nullable(),
+  content: z.string().max(50000).optional().nullable(),
+  coverImage: z.string().max(1000).optional().nullable(),
+  seoTitle: z.string().max(200).optional().nullable(),
+  seoDescription: z.string().max(300).optional().nullable(),
+  publishedAt: z.string().datetime().optional().nullable(),
 });
 
 function corsHeaders() {
@@ -63,10 +71,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ type: s
         category: parsed.data.category,
         order: parsed.data.order ?? 0,
         published: parsed.data.published ?? true,
+        slug: parsed.data.slug || null,
+        excerpt: parsed.data.excerpt,
+        content: parsed.data.content,
+        coverImage: parsed.data.coverImage,
+        seoTitle: parsed.data.seoTitle,
+        seoDescription: parsed.data.seoDescription,
+        publishedAt: parsed.data.publishedAt ? new Date(parsed.data.publishedAt) : (parsed.data.published !== false ? new Date() : null),
       },
     });
     return NextResponse.json({ item }, { status: 201 });
-  } catch (e) {
+  } catch (e: any) {
+    if (e?.code === "P2002") {
+      return NextResponse.json({ error: "slug_taken", message: "Bu slug zaten kullanılıyor, farklı bir slug seçin." }, { status: 409 });
+    }
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 }
