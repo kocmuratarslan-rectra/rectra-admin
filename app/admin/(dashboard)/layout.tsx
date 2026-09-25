@@ -7,11 +7,11 @@ import SignOutButton from "./SignOutButton";
 import NavLink from "./NavLink";
 
 // Faz 1'de gerçek: Panel, Talepler (CRM), İçerik, Süper Admin · Site Kontrolü.
+// Blog & SEO artık gerçek: İçerik (Hizmetler) → Blog sekmesinde yönetiliyor.
 // Diğerleri admin.html tasarımında kalır, "Yakında" etiketiyle devre dışıdır —
 // gerçek veri/entegrasyon olmadan asla sahte veri göstermezler.
 const SOON_ITEMS = [
   { ic: "💳", n: "Tahsilat" },
-  { ic: "📝", n: "Blog & SEO (AI)" },
   { ic: "📧", n: "Mailing Stüdyosu" },
   { ic: "📣", n: "Sosyal Medya & Ads" },
   { ic: "🤖", n: "Murat AI Asistan" },

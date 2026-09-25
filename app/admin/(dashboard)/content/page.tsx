@@ -6,7 +6,7 @@ export default function ContentPage() {
       <div className="topbar">
         <h1>
           İçerik Yönetimi
-          <small>Sitedeki hizmet kartları, referans ve SSS içerikleri</small>
+          <small>Sitedeki hizmet kartları, referans, SSS ve blog içerikleri</small>
         </h1>
       </div>
       <ContentManager />
