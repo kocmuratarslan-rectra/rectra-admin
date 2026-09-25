@@ -10,6 +10,7 @@ type BlogListItem = {
   category: string | null;
   publishedAt: Date | null;
   createdAt: Date;
+  coverImage: string | null;
 };
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 
@@ -51,8 +52,9 @@ export default async function BlogListPage() {
         .rblog-hero h1{font-family:var(--font-d),sans-serif;font-size:clamp(32px,4.5vw,48px);margin-bottom:10px;color:var(--ink)}
         .rblog-hero p{color:var(--muted);font-size:16px;max-width:560px}
         .rblog-list{display:grid;gap:18px;margin-top:40px}
-        .rblog-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;display:block;text-decoration:none;color:inherit;transition:transform .2s,box-shadow .2s}
+        .rblog-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;display:block;text-decoration:none;color:inherit;transition:transform .2s,box-shadow .2s;overflow:hidden}
         .rblog-card:hover{transform:translateY(-2px);box-shadow:0 16px 34px -20px rgba(11,16,38,.25)}
+        .rblog-card-img{width:calc(100% + 48px);margin:-24px -24px 18px;height:220px;object-fit:cover;display:block}
         .rblog-card-cat{display:inline-block;font-family:var(--font-m),monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;background:rgba(45,212,191,.12);color:var(--teal-deep,#0FA99A);padding:4px 10px;border-radius:100px;margin-bottom:12px;font-weight:700}
         .rblog-card h2{font-family:var(--font-d),sans-serif;font-size:22px;margin-bottom:8px;color:var(--ink)}
         .rblog-card p{color:var(--muted);font-size:14.5px;line-height:1.6}
@@ -70,6 +72,7 @@ export default async function BlogListPage() {
         <div className="rblog-list">
           {posts.map((post: BlogListItem) => (
             <Link key={post.id} href={`/blog/${post.slug}`} className="rblog-card">
+              {post.coverImage && <img src={post.coverImage} alt="" className="rblog-card-img" />}
               {post.category && <span className="rblog-card-cat">{CAT_LABELS[post.category] || post.category}</span>}
               <h2>{post.title}</h2>
               {post.excerpt && <p>{post.excerpt}</p>}

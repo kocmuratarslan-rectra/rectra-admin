@@ -17,6 +17,9 @@ const suggestionSchema = z.object({
   content: z.string().min(1).max(50000),
   category: z.string().max(100).optional().nullable(),
   evidence: z.record(z.any()),
+  // Canva ile üretilip base64 data URI'a çevrilmiş kapak görseli (opsiyonel —
+  // görsel üretimi başarısız olursa öneri yine de görselsiz oluşturulabilir).
+  coverImage: z.string().max(5_000_000).optional().nullable(),
 });
 
 function isAutomationRequest(req: Request) {
@@ -43,6 +46,7 @@ export async function POST(req: Request) {
         content: parsed.data.content,
         category: parsed.data.category,
         evidence: parsed.data.evidence,
+        coverImage: parsed.data.coverImage || null,
       },
     });
     return NextResponse.json({ suggestion }, { status: 201 });

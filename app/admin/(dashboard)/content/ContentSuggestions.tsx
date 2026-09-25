@@ -10,6 +10,7 @@ type Suggestion = {
   category: string | null;
   evidence: any;
   createdAt: string;
+  coverImage: string | null;
 };
 
 const CAT_LABELS: Record<string, string> = {
@@ -83,7 +84,7 @@ export default function ContentSuggestions() {
   const [items, setItems] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ title: "", slug: "", excerpt: "", content: "", category: "GENEL" });
+  const [editForm, setEditForm] = useState({ title: "", slug: "", excerpt: "", content: "", category: "GENEL", coverImage: "" });
   const [toast, setToast] = useState<string | null>(null);
 
   function showToast(msg: string) {
@@ -122,6 +123,7 @@ export default function ContentSuggestions() {
       excerpt: s.excerpt || "",
       content: s.content,
       category: s.category || "GENEL",
+      coverImage: s.coverImage || "",
     });
   }
 
@@ -183,6 +185,9 @@ export default function ContentSuggestions() {
             <div key={s.id} style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 18 }}>
               {editingId === s.id ? (
                 <div style={{ display: "grid", gap: 10 }}>
+                  {editForm.coverImage && (
+                    <img src={editForm.coverImage} alt="" style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 10, border: "1px solid var(--line)" }} />
+                  )}
                   <div style={{ display: "grid", gap: 10, gridTemplateColumns: "2fr 1fr" }}>
                     <input className="inp" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
                     <select className="inp" value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}>
@@ -194,6 +199,7 @@ export default function ContentSuggestions() {
                   <input className="inp" value={editForm.slug} onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })} placeholder="slug" />
                   <textarea className="inp" rows={2} value={editForm.excerpt} onChange={(e) => setEditForm({ ...editForm, excerpt: e.target.value })} placeholder="Özet" />
                   <textarea className="inp" rows={10} value={editForm.content} onChange={(e) => setEditForm({ ...editForm, content: e.target.value })} placeholder="İçerik" />
+                  <input className="inp" value={editForm.coverImage} onChange={(e) => setEditForm({ ...editForm, coverImage: e.target.value })} placeholder="Kapak görseli URL (opsiyonel)" />
                   <EvidenceView evidence={s.evidence} />
                   <div style={{ display: "flex", gap: 10 }}>
                     <button className="btn btn-teal btn-sm" onClick={() => publish(s.id)}>Kaydet ve Yayınla</button>
@@ -202,6 +208,9 @@ export default function ContentSuggestions() {
                 </div>
               ) : (
                 <>
+                  {s.coverImage && (
+                    <img src={s.coverImage} alt="" style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 10, marginBottom: 12 }} />
+                  )}
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "flex-start" }}>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 15 }}>{s.title}</div>

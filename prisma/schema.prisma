@@ -169,4 +169,9 @@ model ContentSuggestion {
   status     SuggestionStatus @default(PENDING)
   createdAt  DateTime         @default(now())
   decidedAt  DateTime?
+
+  // Görsel & sosyal genişleme fazı (additive) — otomasyon görevi Canva ile
+  // ürettiği kapak görselini burada base64 data URI olarak taşır. Onaylanınca
+  // ContentItem.coverImage'a aynen aktarılır. Eski öneriler için null kalır.
+  coverImage String?
 }

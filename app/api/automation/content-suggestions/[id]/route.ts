@@ -13,6 +13,7 @@ const decideSchema = z.object({
   excerpt: z.string().max(500).optional().nullable(),
   content: z.string().max(50000).optional(),
   category: z.string().max(100).optional().nullable(),
+  coverImage: z.string().max(5_000_000).optional().nullable(),
 });
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -44,6 +45,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const excerpt = parsed.data.excerpt ?? suggestion.excerpt;
     const content = parsed.data.content ?? suggestion.content;
     const category = parsed.data.category ?? suggestion.category;
+    const coverImage = parsed.data.coverImage ?? suggestion.coverImage;
 
     let item;
     try {
@@ -55,6 +57,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
           excerpt,
           content,
           category,
+          coverImage,
           published: true,
           publishedAt: new Date(),
         },
