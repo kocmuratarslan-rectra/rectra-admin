@@ -20,22 +20,37 @@ function isAutomationRequest(req: Request) {
   return Boolean(secret) && key === secret;
 }
 
+// CORS açık: zamanlanmış otomasyon görevi bir Browser pane sekmesinden (herhangi bir
+// origin'den) fetch ile POST atabilsin diye. Gerçek yetkilendirme x-automation-key
+// header'ı ile yapılıyor, CORS sadece tarayıcı kaynaklı isteklere izin veriyor.
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, x-automation-key",
+  };
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders() });
+}
+
 export async function POST(req: Request) {
   if (!isAutomationRequest(req)) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "unauthorized" }, { status: 401, headers: corsHeaders() });
   }
   try {
     const body = await req.json();
     const parsed = bodySchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "invalid_body", details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json({ error: "invalid_body", details: parsed.error.flatten() }, { status: 400, headers: corsHeaders() });
     }
 
     // "data:image/jpeg;base64,...." önekiyle gelirse temizle.
     const raw = parsed.data.imageBase64.replace(/^data:[^;]+;base64,/, "");
     const buffer = Buffer.from(raw, "base64");
     if (buffer.length === 0) {
-      return NextResponse.json({ error: "empty_image" }, { status: 400 });
+      return NextResponse.json({ error: "empty_image" }, { status: 400, headers: corsHeaders() });
     }
 
     const filename = parsed.data.filename || `blog-cover-${Date.now()}.jpg`;
@@ -45,9 +60,9 @@ export async function POST(req: Request) {
       addRandomSuffix: true,
     });
 
-    return NextResponse.json({ url: blob.url }, { status: 201 });
+    return NextResponse.json({ url: blob.url }, { status: 201, headers: corsHeaders() });
   } catch (e) {
     console.error("upload-image error", e);
-    return NextResponse.json({ error: "server_error" }, { status: 500 });
+    return NextResponse.json({ error: "server_error" }, { status: 500, headers: corsHeaders() });
   }
 }

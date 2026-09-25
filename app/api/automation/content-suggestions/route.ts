@@ -28,15 +28,30 @@ function isAutomationRequest(req: Request) {
   return Boolean(secret) && key === secret;
 }
 
+// CORS açık: zamanlanmış otomasyon görevi bir Browser pane sekmesinden (herhangi bir
+// origin'den) fetch ile POST atabilsin diye. Gerçek yetkilendirme x-automation-key
+// header'ı ile yapılıyor, CORS sadece tarayıcı kaynaklı isteklere izin veriyor.
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, x-automation-key",
+  };
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders() });
+}
+
 export async function POST(req: Request) {
   if (!isAutomationRequest(req)) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "unauthorized" }, { status: 401, headers: corsHeaders() });
   }
   try {
     const body = await req.json();
     const parsed = suggestionSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "invalid_body", details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json({ error: "invalid_body", details: parsed.error.flatten() }, { status: 400, headers: corsHeaders() });
     }
     const suggestion = await prisma.contentSuggestion.create({
       data: {
@@ -49,9 +64,9 @@ export async function POST(req: Request) {
         coverImage: parsed.data.coverImage || null,
       },
     });
-    return NextResponse.json({ suggestion }, { status: 201 });
+    return NextResponse.json({ suggestion }, { status: 201, headers: corsHeaders() });
   } catch (e) {
-    return NextResponse.json({ error: "server_error" }, { status: 500 });
+    return NextResponse.json({ error: "server_error" }, { status: 500, headers: corsHeaders() });
   }
 }
 
