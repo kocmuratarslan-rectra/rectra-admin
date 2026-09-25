@@ -27,7 +27,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="app">
       <aside className="side">
         <div className="logo">
-          RECTRA<em>.</em>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/rectra-logo-white.webp" alt="Rectra" style={{ height: 22, width: "auto", display: "block" }} />
           <small>ADMIN &amp; CRM</small>
         </div>
 
