@@ -23,6 +23,12 @@ enum ContentType {
   BLOG
 }
 
+enum SuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // Hizmetler/Katalog/Takvim'de kullanılan sabit 6 kategori. Canlı sitedeki
 // katalog filtresi, kart animasyon sistemi ve metod panelleri bu 6 kategoriye
 // göre tasarlandığı için sabit tutulur (bkz. proje mimari kararı).
@@ -144,4 +150,23 @@ model CustomSection {
   visible   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// "Murat AI Asistan" pazar analizi otomasyonu (PROJECT_BRIEF Bölüm 6.1/8).
+// 3 günde bir çalışan zamanlanmış görev; rakip/arama-talebi/AI-alıntı verisini
+// (OpenRush) ve genel web aramasını kullanarak kanıta dayalı bir blog taslağı
+// üretir ve buraya PENDING olarak düşer. Murat admin panelden inceleyip
+// Yayınla derse gerçek bir BLOG ContentItem'a dönüşür; hiçbir öneri onay
+// almadan siteye çıkmaz.
+model ContentSuggestion {
+  id         String           @id @default(cuid())
+  title      String
+  slug       String?
+  excerpt    String?
+  content    String
+  category   String?
+  evidence   Json
+  status     SuggestionStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  decidedAt  DateTime?
 }

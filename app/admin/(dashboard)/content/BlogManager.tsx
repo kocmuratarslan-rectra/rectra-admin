@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import ContentSuggestions from "./ContentSuggestions";
 
 type BlogPost = {
   id: string;
@@ -215,6 +216,8 @@ export default function BlogManager() {
       <div className="note" style={{ marginTop: 0, marginBottom: 18 }}>
         Yayınladığınız yazılar canlı sitede <b>{BLOG_BASE}/[slug]</b> adresinde, arama motorları için başlık/açıklama (SEO) etiketleriyle birlikte görünür. SEO başlık/açıklama boş bırakılırsa otomatik olarak başlık ve özet kullanılır.
       </div>
+
+      <ContentSuggestions />
 
       {!showForm ? (
         <button className="btn btn-teal" style={{ marginBottom: 20 }} onClick={() => setShowForm(true)}>
