@@ -5,6 +5,14 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import SignOutButton from "./SignOutButton";
 import NavLink from "./NavLink";
+import { APP_VERSION, LAST_UPDATED, LAST_UPDATE_SUMMARY } from "@/app/version";
+
+const SITE_URL = "https://rectra-site.vercel.app";
+
+function formatDate(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+}
 
 // Faz 1'de gerçek: Panel, Talepler (CRM), İçerik, Süper Admin · Site Kontrolü.
 // Blog & SEO artık gerçek: İçerik (Hizmetler) → Blog sekmesinde yönetiliyor.
@@ -44,6 +52,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <NavLink href="/admin/site" icon="🧭" label="Süper Admin · Site" />
         <NavLink href="/admin/settings" icon="⚙️" label="Ayarlar" />
 
+        <a href={SITE_URL} target="_blank" rel="noopener noreferrer" className="snav site-link">
+          <span className="ic">🌐</span>
+          Siteyi Görüntüle
+          <span className="ext-arrow">↗</span>
+        </a>
+
         <div style={{ height: 10 }} />
 
         {SOON_ITEMS.map((it) => (
@@ -60,6 +74,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div style={{ marginTop: 10 }}>
             <SignOutButton />
           </div>
+          <Link href="/admin/settings" className="ver-tag" title={LAST_UPDATE_SUMMARY}>
+            v{APP_VERSION} <span className="ver-dot">·</span> {formatDate(LAST_UPDATED)}
+          </Link>
         </div>
       </aside>
       <main className="main">{children}</main>
