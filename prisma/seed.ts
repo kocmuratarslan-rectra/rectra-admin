@@ -17,6 +17,16 @@ async function main() {
     await prisma.adminUser.create({ data: { email, passwordHash } });
   }
 
+  // Tek seferlik: admin giriş e-postasını kurumsal adrese taşı. Şifreye
+  // dokunulmaz, sadece giriş e-postası değişir. Bir kez çalıştıktan sonra
+  // eski e-posta artık bulunamayacağı için tekrar çalışmaz (idempotent).
+  const NEW_ADMIN_EMAIL = "info@rectra.com.tr";
+  const oldAdminRow = await prisma.adminUser.findUnique({ where: { email: "zihinacan@gmail.com" } });
+  const newAdminRow = await prisma.adminUser.findUnique({ where: { email: NEW_ADMIN_EMAIL } });
+  if (oldAdminRow && !newAdminRow) {
+    await prisma.adminUser.update({ where: { id: oldAdminRow.id }, data: { email: NEW_ADMIN_EMAIL } });
+  }
+
   const services = [
     { title: "Liderlik & Yönetim", body: "Stratejik Liderlik, Delegasyon, Karar Verme", order: 1 },
     { title: "Koçluk", body: "Yönetici koçluğu, ekip koçluğu, kariyer koçluğu", order: 2 },
@@ -446,7 +456,7 @@ async function main() {
       subtitle: "Takvimden yaprağınızı koparın: bireysel katılıma açık, sertifikalı programlarda kontenjanlar sınırlı.",
     }},
     { key: "trainers", icon: "🎖", name: "Eğitmen Standardı", color: "#B10D31", order: 7, visible: true, fields: {
-      title: "Sahneye herkes çıkamaz.",
+      title: "İşin Mutfağından Gelen Deneyimli Eğitmen Kadromuz",
       subtitle: "Rectra Business School'da eğitmenlik bir unvan değil, kazanılan bir standarttır.",
     }},
     { key: "videos", icon: "📺", name: "Video Vitrini", color: "#54318f", order: 8, visible: true, fields: {
@@ -498,6 +508,21 @@ async function main() {
     if (hasNewKeys) {
       const mergedFields = { ...s.fields, ...existingFields };
       await prisma.siteSection.update({ where: { key: s.key }, data: { fields: mergedFields } });
+    }
+  }
+
+  // Tek seferlik metin düzeltmesi: "Eğitmen Standardımız" başlığı hâlâ eski
+  // varsayılan metni taşıyorsa (admin panelinden hiç değiştirilmemişse) yeni
+  // ifadeyle güncelle. Admin bu alanı manuel değiştirdiyse dokunulmaz —
+  // yukarıdaki "asla ezme" politikasıyla tutarlı, sadece varsayılanı düzeltir.
+  const trainersSection = await prisma.siteSection.findUnique({ where: { key: "trainers" } });
+  if (trainersSection) {
+    const tf = (trainersSection.fields as Record<string, string>) || {};
+    if (tf.title === "Sahneye herkes çıkamaz.") {
+      await prisma.siteSection.update({
+        where: { key: "trainers" },
+        data: { fields: { ...tf, title: "İşin Mutfağından Gelen Deneyimli Eğitmen Kadromuz" } },
+      });
     }
   }
 

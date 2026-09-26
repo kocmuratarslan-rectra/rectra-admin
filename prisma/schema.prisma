@@ -178,3 +178,16 @@ model ContentSuggestion {
   // ContentItem.coverImage'a aynen aktarılır. Eski öneriler için null kalır.
   coverImage String?
 }
+
+// Web sitesinde ziyaretçiye ilk girişte gösterilen tıklanabilir banner pop-up.
+// Aynı anda sadece bir kayıt "active" olabilir; canlı site sadece aktif olanı
+// çeker. Geçmiş kayıtlar silinmeden pasif bırakılabilir (arşiv/tekrar kullanım).
+model PopupBanner {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  linkUrl   String
+  altText   String?
+  active    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
