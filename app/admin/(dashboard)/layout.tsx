@@ -26,10 +26,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="app">
       <aside className="side">
-        <div className="logo">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo/rectra-logo-white.webp" alt="Rectra" style={{ height: 22, width: "auto", display: "block" }} />
-          <small>ADMIN &amp; CRM</small>
+        <input type="checkbox" id="side-toggle" className="side-toggle-checkbox" />
+        <div className="side-top-row">
+          <div className="logo">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo/rectra-logo-white.webp" alt="Rectra" style={{ height: 22, width: "auto", display: "block" }} />
+            <small>ADMIN &amp; CRM</small>
+          </div>
+          <label htmlFor="side-toggle" className="side-toggle-btn" aria-label="Menü">
+            <span></span><span></span><span></span>
+          </label>
         </div>
 
         <NavLink href="/admin" icon="🏠" label="Panel" exact />
