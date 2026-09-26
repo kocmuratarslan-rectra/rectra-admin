@@ -23,6 +23,7 @@ enum ContentType {
   BLOG
   PLATFORM
   INSTRUCTOR
+  VIDEO
 }
 
 enum SuggestionStatus {

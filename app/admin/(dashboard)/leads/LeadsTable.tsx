@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import * as XLSX from "xlsx";
 
 type Lead = {
   id: string;
@@ -91,6 +92,64 @@ export default function LeadsTable() {
     return c;
   }, [leads]);
 
+  function exportRows() {
+    return filtered.map((l) => ({
+      "Ad Soyad": l.name,
+      "E-posta": l.email,
+      "Telefon": l.phone || "",
+      "Mesaj": l.message || "",
+      "Kaynak": l.source,
+      "Durum": STATUS_LABEL[l.status] ?? l.status,
+      "Tarih": new Date(l.createdAt).toLocaleString("tr-TR"),
+    }));
+  }
+
+  function fileStamp() {
+    const d = new Date();
+    return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  function exportExcel() {
+    const rows = exportRows();
+    if (!rows.length) { showToast("İndirilecek talep yok"); return; }
+    const sheet = XLSX.utils.json_to_sheet(rows);
+    sheet["!cols"] = [{ wch: 22 }, { wch: 26 }, { wch: 16 }, { wch: 40 }, { wch: 16 }, { wch: 14 }, { wch: 20 }];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, sheet, "Talepler");
+    const out: ArrayBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    downloadBlob(new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `rectra-talepler-${fileStamp()}.xlsx`);
+    showToast("Excel dosyası indirildi");
+  }
+
+  function csvEscape(v: string) {
+    const s = String(v ?? "");
+    return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+
+  function exportCsv() {
+    const rows = exportRows();
+    if (!rows.length) { showToast("İndirilecek talep yok"); return; }
+    const headers = Object.keys(rows[0]);
+    const lines = [headers.join(";")].concat(
+      rows.map((r) => headers.map((h) => csvEscape((r as any)[h])).join(";"))
+    );
+    // Excel'in Türkçe karakterleri doğru göstermesi için UTF-8 BOM eklenir.
+    const csv = "﻿" + lines.join("\r\n");
+    downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `rectra-talepler-${fileStamp()}.csv`);
+    showToast("CSV dosyası indirildi");
+  }
+
   return (
     <>
       <div className="filters">
@@ -109,6 +168,14 @@ export default function LeadsTable() {
             {STATUS_LABEL[s]} ({counts[s] || 0})
           </button>
         ))}
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+          <button className="btn btn-line btn-sm" onClick={exportExcel} title="Görüntülenen talepleri Excel (.xlsx) olarak indir">
+            ⬇ Excel (.xlsx)
+          </button>
+          <button className="btn btn-line btn-sm" onClick={exportCsv} title="Görüntülenen talepleri CSV olarak indir">
+            ⬇ CSV
+          </button>
+        </div>
       </div>
 
       <div className="card" style={{ padding: 0 }}>

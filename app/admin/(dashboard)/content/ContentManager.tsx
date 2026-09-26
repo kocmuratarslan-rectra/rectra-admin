@@ -23,6 +23,7 @@ const TABS = [
   { key: "BLOG", label: "Blog", hint: "" },
   { key: "PLATFORM", label: "Platformlar", hint: "Canlı sitede \"Dijital Platformlar\" bölümündeki kartlar. Başlık = platform adı, alt başlık = küçük etiket, açıklama = kart metni. Yayından kaldırırsanız kart sitede görünmez." },
   { key: "INSTRUCTOR", label: "Eğitmenler", hint: "Canlı sitede eğitmen kadromuzu gösteren kartlar. Başlık = ad soyad, alt başlık = unvan, kategori alanı = sertifika/etiket satırı." },
+  { key: "VIDEO", label: "Video Vitrini", hint: "Canlı sitede \"Keep In Mind\" video galerisinde gösterilir. Başlık = video başlığı, alt başlık = küçük etiket/kategori, açıklama alanına YouTube video ID'sini veya tam video linkini yazın (ör. https://youtu.be/xxxxxxxxxxx veya sadece xxxxxxxxxxx). Yayından kaldırırsanız video sitede görünmez." },
 ];
 
 const emptyForm = { title: "", subtitle: "", body: "", category: "" };
@@ -31,7 +32,7 @@ function getInitialTab() {
   if (typeof window === "undefined") return "SERVICE";
   const params = new URLSearchParams(window.location.search);
   const t = params.get("tab");
-  const valid = ["CALENDAR", "CATALOG", "SERVICE", "TESTIMONIAL", "FAQ", "BLOG", "PLATFORM", "INSTRUCTOR"];
+  const valid = ["CALENDAR", "CATALOG", "SERVICE", "TESTIMONIAL", "FAQ", "BLOG", "PLATFORM", "INSTRUCTOR", "VIDEO"];
   return t && valid.includes(t) ? t : "SERVICE";
 }
 

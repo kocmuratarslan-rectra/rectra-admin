@@ -108,6 +108,35 @@ async function main() {
     }
   }
 
+  // ==== Video Vitrini / Keep In Mind (canlı sitedeki GERÇEK mevcut 17 video) ====
+  // title = video başlığı, subtitle = küçük etiket/kategori, body = YouTube
+  // video ID'si (tam link de girilebilir — canlı site ID'yi otomatik ayıklar).
+  const videos = [
+    { title: "İK Profesyonelleri İçin Koçvari Yaklaşım Eğitimi", subtitle: "ETİ Akademi", body: "oK2Ui_Y1RpI", order: 1 },
+    { title: "Yeni Nesil Liderlik Programı", subtitle: "Engin Grup", body: "oHUkjH8zMLQ", order: 2 },
+    { title: "İK Stüdyo", subtitle: "Söyleşi", body: "rHnaHubxCBo", order: 3 },
+    { title: "Expat Kültürü ve İş İngilizcesi Öğrenme Yöntemleri", subtitle: "Eğitim", body: "ZzD1nVIZ-7Q", order: 4 },
+    { title: "Mentorluk Yaklaşımının Dünü, Bugünü ve Yarını", subtitle: "Eğitim", body: "v11br40P9iI", order: 5 },
+    { title: "Dijital Pazarlama ve Influencer Dönemi — Part 1", subtitle: "Eğitim", body: "4iCEvmzBhJI", order: 6 },
+    { title: "Dijital Pazarlama ve Influencer Dönemi — Part 2", subtitle: "Eğitim", body: "3ji_m9tqv5A", order: 7 },
+    { title: "Benden Lider Olur Mu? — Part 1", subtitle: "Liderlik", body: "9b5AJSvLXpY", order: 8 },
+    { title: "Benden Lider Olur Mu? — Part 2", subtitle: "Liderlik", body: "R8bn5cs9Nyc", order: 9 },
+    { title: "Liderler İçin Fark Yaratan Online Toplantı Yönetimi — Part 1", subtitle: "Liderlik", body: "19PJCur1XPk", order: 10 },
+    { title: "Liderler İçin Fark Yaratan Online Toplantı Yönetimi — Part 2", subtitle: "Liderlik", body: "6NjxJTRp9VE", order: 11 },
+    { title: "Hedef Belirleme", subtitle: "Orta Anadolu İhracat Birliği", body: "4yXlIWlnZJo", order: 12 },
+    { title: "İlk Fırsat: \"Gençlere Umut Verin\" Kampanya Çağrımız", subtitle: "Sosyal Sorumluluk", body: "wvGE_xMJvt4", order: 13 },
+    { title: "Çetin Zamanlarda İK'nın Yol Haritası — Part 1", subtitle: "İK", body: "6b09bagDXDs", order: 14 },
+    { title: "Çetin Zamanlarda İK'nın Yol Haritası — Part 2", subtitle: "İK", body: "Ab-ctdkc8rM", order: 15 },
+    { title: "Çetin Zamanlarda İK'nın Yol Haritası — Part 3", subtitle: "İK", body: "SS7-FYI3raw", order: 16 },
+    { title: "Hedefleri Belirlemek Üzere Yaşanmış Bir Hikaye — Jim Rohn", subtitle: "İlham", body: "ZJHaiYmEVkA", order: 17 },
+  ];
+  const videoCount = await prisma.contentItem.count({ where: { type: "VIDEO" } });
+  if (videoCount === 0) {
+    for (const v of videos) {
+      await prisma.contentItem.create({ data: { type: "VIDEO", title: v.title, subtitle: v.subtitle, body: v.body, order: v.order } });
+    }
+  }
+
   // ==== Açık Eğitim Takvimi (canlı sitedeki GERÇEK mevcut 6 etkinlik) ====
   // Canlı site bunları /api/calendar/public'ten çekip #takvim bölümünde
   // tarihe göre render eder (geri sayım, koltuk durumu dahil).
@@ -171,6 +200,179 @@ async function main() {
       await prisma.catalogItem.create({
         data: { title: c.title, category: c.category as any, duration: c.duration, format: c.format, level: c.level, order: c.order },
       });
+    }
+  }
+
+  // ==== Katalog genişletmesi: "2025 RECTRA_Eğitim Kataloğu Güncel.docx" ====
+  // Murat'ın yüklediği Word kataloğundaki ~121 eğitim, doğru kategoriye
+  // (AI/LİDER/SOFT/İK/KOÇ) yerleştirilip mevcut 26 eğitimle birleştirilerek
+  // HER KATEGORİDE alfabetik sıraya dizildi (ALİM kategorisi kurum hizmetleri
+  // olduğu için dokümandan yeni eğitim almadı, sadece kendi içinde alfabetik
+  // sıralandı). Bu blok idempotent'tir: başlığa göre eşleşen kayıtların
+  // sadece kategori/sırasını günceller (published/duration gibi admin'in
+  // sonradan değiştirebileceği alanlara dokunmaz), eşleşmeyenleri oluşturur.
+  // Sadece katalog hâlâ ilk 26 kayıtta ise çalışır — admin daha sonra manuel
+  // sıralama yaparsa bir sonraki deploy'da bu blok tekrar üzerine yazmaz.
+  const catalogCountNow = await prisma.catalogItem.count();
+  if (catalogCountNow <= 26) {
+    const fullCatalog: { title: string; category: "AI" | "LIDER" | "SOFT" | "IK" | "ALIM" | "KOC"; duration: string; format: string; level: string; order: number }[] = [
+      { title: "Çalışanlar için Yapay Zekâ Okuryazarlığı", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Temel", order: 1 },
+      { title: "Dijital Araçlar ve Uygulama Yöntemleri", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 2 },
+      { title: "Dijital Check-up ve Strateji Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 3 },
+      { title: "Dijital Context ve Content Yaklaşımı", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 4 },
+      { title: "Dijital Dönüşüm", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 5 },
+      { title: "Dijital İhracatta Dijital İletişim ve Dönüşümün Önemi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 6 },
+      { title: "Dijital Kriz Yönetimi Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 7 },
+      { title: "Dijital Mecralar ve Platformlarda Hesap Yönetimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 8 },
+      { title: "Dijital Medya Satın Alma ve Optimizasyon", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 9 },
+      { title: "Dijital Pazarlama Case'leri", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 10 },
+      { title: "Dijital Pazarlama Eğitimi", category: "AI", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 11 },
+      { title: "Dijital Performans Pazarlaması", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 12 },
+      { title: "Dijital Veri, İçgörü ve Analiz Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 13 },
+      { title: "Dijital Yetenekler ve Yapay Zeka Uygulamaları Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 14 },
+      { title: "E-Ticaret Eğitimi", category: "AI", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 15 },
+      { title: "Güçlü Marka Oluşturma Stratejileri Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 16 },
+      { title: "Günümüz Yapay Zeka Çağında Hayatta Kalmak", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 17 },
+      { title: "İçerik Editörlüğü Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 18 },
+      { title: "İçerik Pazarlaması Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 19 },
+      { title: "İK'da Yapay Zekâ: Uygulama Atölyesi", category: "AI", duration: "1 Gün", format: "Yüz yüze", level: "İK Profesyoneli", order: 20 },
+      { title: "İş Süreçlerinde Etkin Yapay Zeka Kullanımı Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 21 },
+      { title: "Kurumsal Yapay Zekâ Politikası Tasarımı", category: "AI", duration: "½ Gün", format: "Danışmanlık + Atölye", level: "Üst Yönetim", order: 22 },
+      { title: "LinkedIn ve B2B Dijital İletişim", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 23 },
+      { title: "Prompt Mühendisliği", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 24 },
+      { title: "Prompt Mühendisliği Atölyesi", category: "AI", duration: "1 Gün", format: "Online", level: "Orta", order: 25 },
+      { title: "Sanayi 4.0 Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 26 },
+      { title: "SEO Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 27 },
+      { title: "Search ve Web Sitesi Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 28 },
+      { title: "Sosyal Medya Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 29 },
+      { title: "Veri Analizi ve Görselleştirme", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 30 },
+      { title: "Veri Okuryazarlığı Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 31 },
+      { title: "Yapay Zeka Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 32 },
+      { title: "Yapay Zeka ile Kreatif Yetkinlik Kazanımı", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 33 },
+      { title: "Yapay Zeka Operatörlüğü Eğitimi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 34 },
+      { title: "Yöneticiler için Bireysel Dijital İletişim Stratejileri ve Şirket İletişimleri için Önemi", category: "AI", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 35 },
+      { title: "Yöneticiler için Üretken Yapay Zekâ ve Strateji", category: "AI", duration: "1 Gün", format: "Yüz yüze", level: "Yönetici", order: 36 },
+      { title: "Çatışma ve Stres Yönetimi", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 1 },
+      { title: "Çatışma Yönetimi", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 2 },
+      { title: "Çatışma Yönetimi Eğitimi", category: "LIDER", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 3 },
+      { title: "Dayanıklılık", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 4 },
+      { title: "Değişim Yönetimi ve Liderliği", category: "LIDER", duration: "1 Gün", format: "Yüz yüze", level: "Yönetici", order: 5 },
+      { title: "Delegasyon Eğitimi", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 6 },
+      { title: "Delegasyon ve Geri Bildirim Ustalığı", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 7 },
+      { title: "Duygusal Zekâ ve Empati", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 8 },
+      { title: "Ekibe Liderlik Etmek Eğitimi", category: "LIDER", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 9 },
+      { title: "Ekip Yönetimi ve Motivasyon", category: "LIDER", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 10 },
+      { title: "Etkin Geri Bildirim Eğitimi", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 11 },
+      { title: "İlk Kademe Yönetici Gelişim Programı", category: "LIDER", duration: "2 Gün", format: "Yüz yüze", level: "Yeni Yönetici", order: 12 },
+      { title: "Koçvari Liderlik", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 13 },
+      { title: "Kuşaklar Arası İletişim ve İlişki Yönetimi Eğitimi", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 14 },
+      { title: "Liderler için Hikaye Anlatımı Eğitimi", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 15 },
+      { title: "Liderlik Gelişim Programı (Modüler)", category: "LIDER", duration: "4×1 Gün", format: "Hibrit", level: "Orta/Üst Kademe", order: 16 },
+      { title: "Norm Kadro Analizi (Çalışan Niteliklerinin Belirlenmesi) Eğitimi", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 17 },
+      { title: "Proje Liderliği Eğitimi", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 18 },
+      { title: "Proje Yönetimi Eğitimi", category: "LIDER", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 19 },
+      { title: "Stratejik Düşünme ve Karar Alma", category: "LIDER", duration: "1 Gün", format: "Yüz yüze", level: "Yönetici", order: 20 },
+      { title: "Takım İçi Liderlik Eğitimi", category: "LIDER", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 21 },
+      { title: "Takım Koçluğu Gelişim Programı", category: "LIDER", duration: "6 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 22 },
+      { title: "Uzaktan Ekip ve İş Yönetimi Eğitimi", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 23 },
+      { title: "VUCA Çağında Liderlik Eğitimi", category: "LIDER", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 24 },
+      { title: "Yönetim Becerilerini Geliştirme Eğitimi", category: "LIDER", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 25 },
+      { title: "Yönetim ve Organizasyon Eğitimi", category: "LIDER", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 26 },
+      { title: "Yönetimde Stratejik Planlama Eğitimi", category: "LIDER", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Yöneticiler", order: 27 },
+      { title: "Agile Yönetim ve Scrum Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 1 },
+      { title: "B2B Pazarlama Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 2 },
+      { title: "Duygusal Dayanıklılık Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 3 },
+      { title: "Duygusal Zeka Merkezli Takım Yönetimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 4 },
+      { title: "Eleştirel Düşünme Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 5 },
+      { title: "Etkili İletişim Teknikleri Eğitimi", category: "SOFT", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 6 },
+      { title: "Etkili İletişim ve Dinleme", category: "SOFT", duration: "1 Gün", format: "Yüz yüze", level: "Tüm Çalışanlar", order: 7 },
+      { title: "Etkili Sunum Teknikleri Eğitimi", category: "SOFT", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 8 },
+      { title: "Finansal Okuryazarlık Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 9 },
+      { title: "Girişimcilik ve Değer Yaratma Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 10 },
+      { title: "Hedef Belirleme Teknikleri Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 11 },
+      { title: "Hızlı Okuma ve Hafıza Teknikleri Eğitimi", category: "SOFT", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 12 },
+      { title: "Hitabet ve Diksiyon Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 13 },
+      { title: "İkna Teknikleri Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 14 },
+      { title: "İlişki Yönetimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 15 },
+      { title: "İş Hayatında Yazışma Teknikleri Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 16 },
+      { title: "Müşteri İlişkileri Yönetimi ve CRM Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 17 },
+      { title: "Müşteri Odaklı Satış Teknikleri Eğitimi", category: "SOFT", duration: "2 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 18 },
+      { title: "Müşteri Tipleri ve Yaklaşım Yöntemleri", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 19 },
+      { title: "Müşteri (Tüketici) Davranışları Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 20 },
+      { title: "Nöropazarlama Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 21 },
+      { title: "Oyunlaştırma Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 22 },
+      { title: "Öğrenme Çevikliği Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 23 },
+      { title: "Öğrenmeyi Öğrenme Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 24 },
+      { title: "Problem Çözme ve Analitik Düşünme", category: "SOFT", duration: "1 Gün", format: "Yüz yüze", level: "Tüm Çalışanlar", order: 25 },
+      { title: "Satış Koçluğu Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 26 },
+      { title: "Satış Teknikleri Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 27 },
+      { title: "Satış Yönetimi Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 28 },
+      { title: "Stratejik Pazarlama ve Ürün Yönetimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 29 },
+      { title: "Stres ve Tükenmişlik Yönetimi", category: "SOFT", duration: "½ Gün", format: "Online", level: "Tüm Çalışanlar", order: 30 },
+      { title: "Stres Yönetimi Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 31 },
+      { title: "Sunum Becerileri: Sahnede Etki", category: "SOFT", duration: "1 Gün", format: "Yüz yüze", level: "Tüm Çalışanlar", order: 32 },
+      { title: "Takım Çalışması ve İş Birliği", category: "SOFT", duration: "1 Gün", format: "Yüz yüze", level: "Ekipler", order: 33 },
+      { title: "Telefonda Etkili İletişim Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 34 },
+      { title: "Telefonda Satış Teknikleri Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 35 },
+      { title: "Temel Satış Becerileri", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 36 },
+      { title: "Temel Yönetim Becerileri Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 37 },
+      { title: "Uzaktan Verimli Çalışma Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 38 },
+      { title: "Yaratıcı Düşünme Teknikleri ve İnovasyon Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 39 },
+      { title: "Zaman ve Öncelik Yönetimi", category: "SOFT", duration: "½ Gün", format: "Online", level: "Tüm Çalışanlar", order: 40 },
+      { title: "Zaman Yönetimi Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 41 },
+      { title: "Zor Müşterilerle Başa Çıkma Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 42 },
+      { title: "21. Yüzyıl Becerileri Kazanma Eğitimi", category: "SOFT", duration: "1 Gün", format: "Yüz yüze / Online", level: "Tüm Çalışanlar", order: 43 },
+      { title: "Bordrolama Eğitimi", category: "IK", duration: "2 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 1 },
+      { title: "CV Hazırlama ve Mülakata Hazırlık Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 2 },
+      { title: "Değerlendirme Merkezi Sertifika Programı", category: "IK", duration: "4 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 3 },
+      { title: "Deneyimsel Öğrenme Metodolojisi ile Eğitim Tasarımı", category: "IK", duration: "2 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 4 },
+      { title: "Eğitimcinin Eğitimi", category: "IK", duration: "2 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 5 },
+      { title: "Eğitimde Ölçme-Değerlendirme Teknikleri", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 6 },
+      { title: "Etkili Geri Bildirim Teknikleri", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 7 },
+      { title: "İK Analitiği ve Veriyle Karar", category: "IK", duration: "1 Gün", format: "Online", level: "İK Profesyoneli", order: 8 },
+      { title: "İK Asistanlığı Eğitimi", category: "IK", duration: "3 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 9 },
+      { title: "İK Metrikleri ve İK Analitik", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 10 },
+      { title: "İK'da Değişim Yönetimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 11 },
+      { title: "İngilizce Mülakata Hazırlık", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 12 },
+      { title: "İş Analizi ve Başarı Profilleme", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 13 },
+      { title: "İş Analizi ve Görev Tanımı", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 14 },
+      { title: "İş Değerlemeye Dayalı Ücret Sistemi Yönetimi Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 15 },
+      { title: "İş İlanı Hazırlama, Aday Özgeçmişi Analiz Etme ve Değerlendirme Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 16 },
+      { title: "İş Yaşamında Kuşakların Yönetimi Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 17 },
+      { title: "İşyerinde Çeşitlilik ve Kapsayıcılık Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 18 },
+      { title: "Kariyer Yönetimi Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 19 },
+      { title: "Kurum Değerleri Oluşturma Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 20 },
+      { title: "Kurum İçi İletişim Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 21 },
+      { title: "Kurumsal Dayanıklılığın Artırılması ve Kurumsal Esnekliğin Sağlanması Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 22 },
+      { title: "Oryantasyon Programı Tasarımı Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 23 },
+      { title: "Performans Değerlendirme Yönetimi Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 24 },
+      { title: "Performans Yönetimi Sistemi Kurulumu", category: "IK", duration: "Proje", format: "Danışmanlık", level: "İK Ekibi", order: 25 },
+      { title: "Temel İş Kanunu ve İş Hukuku Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 26 },
+      { title: "Temel İş Sağlığı ve Güvenliği Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 27 },
+      { title: "Verimli Sanal Toplantı Yönetimi Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 28 },
+      { title: "Yetenek Yönetimi Eğitimi", category: "IK", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK Ekibi", order: 29 },
+      { title: "Yetenek Yönetimi ve Yedekleme Planı", category: "IK", duration: "1 Gün", format: "Yüz yüze", level: "İK Ekibi", order: 30 },
+      { title: "Yetkinlik Bazlı Mülakat Teknikleri", category: "IK", duration: "1 Gün", format: "Online", level: "İK / Yönetici", order: 31 },
+      { title: "Assessment Center Tasarımı ve Uygulaması", category: "ALIM", duration: "Proje", format: "Hizmet", level: "Tüm Kademeler", order: 1 },
+      { title: "Kişilik ve Yetkinlik Envanterleri", category: "ALIM", duration: "Sürekli", format: "Dijital", level: "Tüm Kademeler", order: 2 },
+      { title: "Yönetici İşe Alımı (Executive Search)", category: "ALIM", duration: "Proje", format: "Hizmet", level: "C-Level / Direktör", order: 3 },
+      { title: "Kurum İçi Koçluk Eğitimi", category: "KOC", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK / Yönetici", order: 1 },
+      { title: "Kurum İçi Koçluk ve Mentorluk Sistemi Kurma Eğitimi", category: "KOC", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK / Yönetici", order: 2 },
+      { title: "Mentorluk Proje Liderliği Eğitimi", category: "KOC", duration: "1 Gün", format: "Yüz yüze / Online", level: "İK / Yönetici", order: 3 },
+      { title: "Profesyonel Koçluk Programı (ICF Yolu)", category: "KOC", duration: "12 Hafta", format: "Hibrit", level: "Koç Adayı", order: 4 },
+      { title: "Takım Koçluğu Programı", category: "KOC", duration: "4-8 Seans", format: "Ekip", level: "Ekipler", order: 5 },
+      { title: "Temel Koçluk Sertifika Programı", category: "KOC", duration: "3 Gün", format: "Yüz yüze / Online", level: "İK / Yönetici", order: 6 },
+      { title: "Yönetici Koçluğu (Executive Coaching)", category: "KOC", duration: "6-12 Seans", format: "Birebir", level: "Yönetici", order: 7 },
+    ];
+    for (const c of fullCatalog) {
+      const existingCatalogItem = await prisma.catalogItem.findFirst({ where: { title: c.title } });
+      if (existingCatalogItem) {
+        await prisma.catalogItem.update({ where: { id: existingCatalogItem.id }, data: { category: c.category as any, order: c.order } });
+      } else {
+        await prisma.catalogItem.create({
+          data: { title: c.title, category: c.category as any, duration: c.duration, format: c.format, level: c.level, order: c.order },
+        });
+      }
     }
   }
 
