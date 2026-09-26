@@ -526,6 +526,81 @@ async function main() {
     }
   }
 
+  // ==== Eğitim İhtiyaç Analizi: varsayılan yetkinlik taksonomisi ====
+  // Sadece hiç yetkinlik yoksa (ilk kurulum) eklenir; admin panelinden
+  // düzenlenen/eklenen kayıtlara bir daha dokunulmaz.
+  const competencyCount = await prisma.competency.count();
+  if (competencyCount === 0) {
+    const taxonomy: { name: string; category: string; order: number; indicators: string[] }[] = [
+      {
+        name: "Yapay Zekâ Okuryazarlığı", category: "AI", order: 1,
+        indicators: [
+          "Günlük işlerinde AI araçlarını (metin/veri analizi vb.) etkin kullanır",
+          "AI çıktısını sorgulamadan kullanmaz, doğruluğunu değerlendirir",
+          "Ekibine AI kullanımı konusunda örnek olur ve bilgi paylaşır",
+          "Prompt yazarken işe uygun, net talimatlar verir",
+        ],
+      },
+      {
+        name: "Liderlik & Stratejik Yönetim", category: "LIDER", order: 2,
+        indicators: [
+          "Ekibine net ve ölçülebilir hedefler tanımlar",
+          "Değişim süreçlerinde ekibini etkili şekilde yönlendirir",
+          "Karar alırken veriye ve farklı görüşlere başvurur",
+          "Yetki devrini etkin ve zamanında yapar",
+        ],
+      },
+      {
+        name: "İletişim & Sunum Becerileri", category: "SOFT", order: 3,
+        indicators: [
+          "Karmaşık bir konuyu sade ve anlaşılır anlatır",
+          "Yapıcı geri bildirim verir ve alır",
+          "Zor/çatışmalı konuşmaları yapıcı şekilde yönetir",
+          "Dinleyiciyi ikna eden, akıcı sunum yapar",
+        ],
+      },
+      {
+        name: "İnsan Kaynakları & Performans Yönetimi", category: "IK", order: 4,
+        indicators: [
+          "Performans görüşmelerini düzenli ve yapılandırılmış yapar",
+          "Yetenek yönetimi ve gelişim planlarını takip eder",
+          "Mülakatlarda yetkinlik bazlı soru sorar",
+          "İşe alım kararlarını objektif kriterlerle verir",
+        ],
+      },
+      {
+        name: "İşe Alım & Yetenek Değerlendirme", category: "ALIM", order: 5,
+        indicators: [
+          "Pozisyon gereksinimlerini net şekilde tanımlar",
+          "Aday değerlendirmesinde yapılandırılmış yöntem kullanır (assessment center vb.)",
+          "İşe alım sürecini aday için iyi bir deneyim olarak yönetir",
+          "Executive search süreçlerinde pazar/rakip analizini kullanır",
+        ],
+      },
+      {
+        name: "Koçluk & Mentorluk", category: "KOC", order: 6,
+        indicators: [
+          "Ekip üyelerine düzenli birebir koçluk görüşmeleri yapar",
+          "Soru sorarak keşfettirir, doğrudan çözüm dayatmaz",
+          "Kişisel gelişim planlarını takip eder ve destekler",
+          "Kendi gelişimi için de koçluk/mentorluk alır",
+        ],
+      },
+    ];
+    for (const comp of taxonomy) {
+      await prisma.competency.create({
+        data: {
+          name: comp.name,
+          category: comp.category as any,
+          order: comp.order,
+          indicators: {
+            create: comp.indicators.map((text, i) => ({ text, order: i + 1 })),
+          },
+        },
+      });
+    }
+  }
+
   console.log("Seed complete. Admin login:", email);
 }
 

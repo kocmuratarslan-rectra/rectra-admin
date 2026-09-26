@@ -191,3 +191,44 @@ model PopupBanner {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ==== Eğitim İhtiyaç Analizi (Training Needs Analysis) ====
+// Firmaların yetkinlik setleri ve davranış göstergeleri üzerinden mevcut/hedef
+// seviye girip anlık bir açık (gap) analizi + önerilen eğitim çıktısı aldığı
+// özellik. Competency/BehaviorIndicator admin'den yönetilen taksonomi;
+// NeedsAnalysis her bir doldurulmuş formun kaydıdır ve aynı zamanda bir
+// Lead olarak da CRM'e düşer (leadId ile ilişkilendirilir, ayrı tutulur ki
+// Lead modeline dokunmadan additive kalsın).
+model Competency {
+  id         String              @id @default(cuid())
+  name       String
+  category   TrainingCategory
+  order      Int                 @default(0)
+  active     Boolean             @default(true)
+  indicators BehaviorIndicator[]
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+}
+
+model BehaviorIndicator {
+  id           String     @id @default(cuid())
+  competency   Competency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+  competencyId String
+  text         String
+  order        Int        @default(0)
+  active       Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+}
+
+model NeedsAnalysis {
+  id           String   @id @default(cuid())
+  companyName  String
+  contactName  String
+  contactEmail String
+  contactPhone String?
+  responses    Json
+  summary      String?
+  recommended  Json?
+  leadId       String?
+  createdAt    DateTime @default(now())
+}
