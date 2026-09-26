@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import PasswordInput from "@/app/PasswordInput";
 
 export default function PasswordForm() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -54,19 +55,19 @@ export default function PasswordForm() {
         <label style={{ fontFamily: "var(--font-m)", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--muted)", display: "block", marginBottom: 6 }}>
           Mevcut Şifre
         </label>
-        <input className="inp" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
+        <PasswordInput className="inp" value={currentPassword} onChange={setCurrentPassword} required autoComplete="current-password" />
       </div>
       <div>
         <label style={{ fontFamily: "var(--font-m)", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--muted)", display: "block", marginBottom: 6 }}>
           Yeni Şifre
         </label>
-        <input className="inp" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={8} />
+        <PasswordInput className="inp" value={newPassword} onChange={setNewPassword} required minLength={8} autoComplete="new-password" />
       </div>
       <div>
         <label style={{ fontFamily: "var(--font-m)", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--muted)", display: "block", marginBottom: 6 }}>
           Yeni Şifre (Tekrar)
         </label>
-        <input className="inp" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={8} />
+        <PasswordInput className="inp" value={confirmPassword} onChange={setConfirmPassword} required minLength={8} autoComplete="new-password" />
       </div>
 
       {msg && (
