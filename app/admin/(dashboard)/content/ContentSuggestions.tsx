@@ -86,6 +86,11 @@ export default function ContentSuggestions() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ title: "", slug: "", excerpt: "", content: "", category: "GENEL", coverImage: "" });
   const [toast, setToast] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  function toggleExpand(id: string) {
+    setExpandedId((cur) => (cur === id ? null : id));
+  }
 
   function showToast(msg: string) {
     setToast(msg);
@@ -218,6 +223,12 @@ export default function ContentSuggestions() {
                         {CAT_LABELS[s.category || "GENEL"] || s.category} · {new Date(s.createdAt).toLocaleDateString("tr-TR", { day: "2-digit", month: "long", year: "numeric" })}
                       </div>
                       {s.excerpt && <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 6 }}>{s.excerpt}</div>}
+                      <button
+                        onClick={() => toggleExpand(s.id)}
+                        style={{ marginTop: 8, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "var(--font-m)", fontSize: 11.5, letterSpacing: ".04em", fontWeight: 700, color: "var(--teal-deep, #0FA99A)", textDecoration: "underline" }}
+                      >
+                        {expandedId === s.id ? "▲ Kapat" : "▼ Devamını oku"}
+                      </button>
                     </div>
                     <div style={{ display: "flex", gap: 8, flex: "none" }}>
                       <button className="btn btn-teal btn-sm" onClick={() => publish(s.id)}>Yayınla</button>
@@ -225,6 +236,11 @@ export default function ContentSuggestions() {
                       <button className="btn btn-line btn-sm" style={{ color: "#dc2626", borderColor: "#dc2626" }} onClick={() => reject(s.id)}>Reddet</button>
                     </div>
                   </div>
+                  {expandedId === s.id && (
+                    <div style={{ marginTop: 12, padding: 16, background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14, lineHeight: 1.7, whiteSpace: "pre-wrap", maxHeight: 480, overflowY: "auto" }}>
+                      {s.content}
+                    </div>
+                  )}
                   <EvidenceView evidence={s.evidence} />
                 </>
               )}

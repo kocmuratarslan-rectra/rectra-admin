@@ -21,6 +21,8 @@ const TABS = [
   { key: "TESTIMONIAL", label: "Referanslar", hint: "Canlı sitede \"Sonuç konuşsun\" bölümünde dönüşümlü gösterilir." },
   { key: "FAQ", label: "SSS", hint: "Canlı sitede \"Merak ettikleriniz\" bölümünde listelenir." },
   { key: "BLOG", label: "Blog", hint: "" },
+  { key: "PLATFORM", label: "Platformlar", hint: "Canlı sitede \"Dijital Platformlar\" bölümündeki kartlar. Başlık = platform adı, alt başlık = küçük etiket, açıklama = kart metni. Yayından kaldırırsanız kart sitede görünmez." },
+  { key: "INSTRUCTOR", label: "Eğitmenler", hint: "Canlı sitede eğitmen kadromuzu gösteren kartlar. Başlık = ad soyad, alt başlık = unvan, kategori alanı = sertifika/etiket satırı." },
 ];
 
 const emptyForm = { title: "", subtitle: "", body: "", category: "" };
@@ -29,7 +31,7 @@ function getInitialTab() {
   if (typeof window === "undefined") return "SERVICE";
   const params = new URLSearchParams(window.location.search);
   const t = params.get("tab");
-  const valid = ["CALENDAR", "CATALOG", "SERVICE", "TESTIMONIAL", "FAQ", "BLOG"];
+  const valid = ["CALENDAR", "CATALOG", "SERVICE", "TESTIMONIAL", "FAQ", "BLOG", "PLATFORM", "INSTRUCTOR"];
   return t && valid.includes(t) ? t : "SERVICE";
 }
 
@@ -224,9 +226,10 @@ function ContentTabBody({
   return (
     <>
       <div className="card" style={{ marginBottom: 20 }}>
-        <form onSubmit={addItem} style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr 1fr auto" }}>
+        <form onSubmit={addItem} style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr 1fr 1fr auto" }}>
           <input className="inp" placeholder="Başlık" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           <input className="inp" placeholder="Alt başlık (opsiyonel)" value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} />
+          <input className="inp" placeholder="Kategori / etiket (opsiyonel)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
           <input className="inp" placeholder="Açıklama / içerik" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} />
           <button type="submit" className="btn btn-teal">+ Ekle</button>
         </form>
@@ -251,6 +254,10 @@ function ContentTabBody({
                     <input className="inp" value={editForm.subtitle} onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })} />
                   </div>
                   <div>
+                    <label style={{ fontFamily: "var(--font-m)", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--muted)", display: "block", marginBottom: 6 }}>Kategori / etiket</label>
+                    <input className="inp" value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} />
+                  </div>
+                  <div>
                     <label style={{ fontFamily: "var(--font-m)", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--muted)", display: "block", marginBottom: 6 }}>Açıklama / içerik</label>
                     <textarea className="inp" rows={3} value={editForm.body} onChange={(e) => setEditForm({ ...editForm, body: e.target.value })} />
                   </div>
@@ -264,6 +271,7 @@ function ContentTabBody({
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 15 }}>{item.title}</div>
                     {item.subtitle && <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>{item.subtitle}</div>}
+                    {item.category && <div style={{ fontFamily: "var(--font-m)", fontSize: 11, letterSpacing: ".06em", color: "var(--muted)", marginTop: 2 }}>{item.category}</div>}
                     {item.body && <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{item.body}</div>}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>

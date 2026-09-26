@@ -21,6 +21,8 @@ enum ContentType {
   TESTIMONIAL
   FAQ
   BLOG
+  PLATFORM
+  INSTRUCTOR
 }
 
 enum SuggestionStatus {

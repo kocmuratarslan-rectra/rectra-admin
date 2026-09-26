@@ -73,6 +73,41 @@ async function main() {
     }
   }
 
+  // ==== Dijital Platformlar (canlı sitedeki GERÇEK mevcut 2 platform kartı) ====
+  // title = platform adı, subtitle = küçük etiket (plat-tag), body = açıklama.
+  // category = kart teması ("tealb" / "ambb" — ilk iki kayıt için); sonradan
+  // eklenen platformlar için boş bırakılabilir, sitede genel kart stiliyle gösterilir.
+  const platforms = [
+    { title: "Rectra Dijital Eğitim Platformu", subtitle: "EĞİTİM ÖNCESİ + SONRASI", body: "Katılımcının tüm eğitim materyali tek yerde. Sınıfa hazır gelir, sonrasında pekiştirir.", category: "tealb", order: 1 },
+    { title: "Rectra İş Simülasyon Platformu", subtitle: "EĞİTİM SONRASI ÖLÇÜM", body: "Öğrenilen davranış, güvenli senaryolarda denenir; değişim 30-60-90 günde ölçülür.", category: "ambb", order: 2 },
+  ];
+  const platformCount = await prisma.contentItem.count({ where: { type: "PLATFORM" } });
+  if (platformCount === 0) {
+    for (const p of platforms) {
+      await prisma.contentItem.create({ data: { type: "PLATFORM", title: p.title, subtitle: p.subtitle, body: p.body, category: p.category, order: p.order } });
+    }
+  }
+
+  // ==== Eğitmen Kadromuz (canlı sitedeki GERÇEK mevcut 8 eğitmen) ====
+  // title = ad, subtitle = unvan, category = sertifika/etiket satırı.
+  // Avatar rengi ve baş harfler canlı sitede addan otomatik türetilir.
+  const instructors = [
+    { title: "Murat K.", subtitle: "Kurucu · Baş Eğitmen & Executive Coach", category: "ICF PCC · LİDERLİK · AI", order: 1 },
+    { title: "Selin D.", subtitle: "Kıdemli Eğitmen · İK & Yetenek", category: "SHRM-SCP · ASSESSMENT", order: 2 },
+    { title: "Emre A.", subtitle: "Yapay Zekâ Programları Lideri", category: "ÜRETKEN AI · PROMPT", order: 3 },
+    { title: "Aygün N.", subtitle: "Kıdemli Koç · Azerbaycan", category: "ICF ACC · TAKIM KOÇLUĞU", order: 4 },
+    { title: "Deniz Y.", subtitle: "Satış & Müşteri Deneyimi", category: "15 YIL SAHA LİDERLİĞİ", order: 5 },
+    { title: "Pelin S.", subtitle: "Soft Skills · İletişim", category: "DOKTORA · KOLB UYGULAYICI", order: 6 },
+    { title: "Kaan T.", subtitle: "Assessment & Envanter", category: "AC LİSANSI · PSİKOMETRİ", order: 7 },
+    { title: "Leyla H.", subtitle: "İş Simülasyonu Tasarımı", category: "SENARYO · ÖLÇÜM", order: 8 },
+  ];
+  const instructorCount = await prisma.contentItem.count({ where: { type: "INSTRUCTOR" } });
+  if (instructorCount === 0) {
+    for (const ins of instructors) {
+      await prisma.contentItem.create({ data: { type: "INSTRUCTOR", title: ins.title, subtitle: ins.subtitle, category: ins.category, order: ins.order } });
+    }
+  }
+
   // ==== Açık Eğitim Takvimi (canlı sitedeki GERÇEK mevcut 6 etkinlik) ====
   // Canlı site bunları /api/calendar/public'ten çekip #takvim bölümünde
   // tarihe göre render eder (geri sayım, koltuk durumu dahil).

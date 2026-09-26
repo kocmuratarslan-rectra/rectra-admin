@@ -4,7 +4,7 @@ import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const VALID_TYPES = ["SERVICE", "TESTIMONIAL", "FAQ", "BLOG"];
+const VALID_TYPES = ["SERVICE", "TESTIMONIAL", "FAQ", "BLOG", "PLATFORM", "INSTRUCTOR"];
 
 const createSchema = z.object({
   title: z.string().min(1).max(300),
